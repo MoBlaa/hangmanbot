@@ -78,7 +78,7 @@ class Failed(State):
         return f"__Failed!__ The word was `{self.word}`"
 
 class Hangmanbot(discord.Client):
-    state: State = None
+    states = {}
 
     async def on_ready(self):
         print('Logged in as {0}'.format(self.user))
@@ -93,19 +93,25 @@ class Hangmanbot(discord.Client):
             word = message.content.replace("!start", "").strip(" |")
             if len(word) <= 2:
                 raise ValueError("Word has to be at least 3 characters long")
+            if not isinstance(message.channel, discord.TextChannel) and not isinstance(message.channel, discord.GroupChannel):
+                await message.channel.send("Can only start hangman in text or group channels")
+                return
             
             await message.delete()
 
-            self.state = Running(word)
-            await message.channel.send(f"{self.state}")
+            self.states[message.channel.id] = Running(word)
+            await message.channel.send(f"{self.states.get(message.channel.id)}")
         elif message.content.startswith("!guess"):
-            if not isinstance(self.state, Running):
-                await message.channel.send("No guess running. Please start with `!start <word>` first")
+            if (message.channel.id not in self.states) and (not isinstance(self.states.get(message.channel.id), Running)):
+                await message.channel.send("No guess running in this channel. Please start with `!start <word>` first")
                 return
 
             guess = message.content.replace("!guess", "").strip()
-            self.state = self.state.guess(guess, message.author)
-            await message.channel.send(f"{self.state}")
+            self.states[message.channel.id] = self.states.get(message.channel.id).guess(guess, message.author)
+            await message.channel.send(f"{self.states[message.channel.id]}")
+
+            if isinstance(self.states.get(message.channel.id), Solved):
+                del self.states[message.channel.id]
 
 client = Hangmanbot()
 client.run(settings.DISCORD_TOKEN)
