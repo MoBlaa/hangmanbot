@@ -9,7 +9,7 @@ class State:
     def guess(self, guess: str, guesser: discord.Member):
         return self
 
-MAX_GUESSES = 10
+MAX_GUESSES = 5
 class Running(State):
     word: str
     unveiled: [bool]
@@ -89,8 +89,8 @@ class Hangmanbot(discord.Client):
 
         print('Message from {0.author}: {0.content}'.format(message))
 
-        if message.content.startswith("!start"):
-            word = message.content.replace("!start", "").strip(" |")
+        if message.content.startswith("!start_hangman"):
+            word = message.content.replace("!start_hangman", "").strip(" |")
             if len(word) <= 2:
                 raise ValueError("Word has to be at least 3 characters long")
             if not isinstance(message.channel, discord.TextChannel) and not isinstance(message.channel, discord.GroupChannel):
