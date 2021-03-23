@@ -1,6 +1,7 @@
 import logging
 import settings
 import discord
+import sys
 from enum import Enum
 
 logging.basicConfig(level=logging.INFO)
@@ -87,11 +88,13 @@ class Hangmanbot(discord.Client):
 
     async def on_ready(self):
         print('Logged in as {0}'.format(self.user))
+        user = await self.fetch_user(self.user.id)
+        print("{0}".format(user))
 
     async def on_message(self, message: discord.Message):
         if message.author.display_name.startswith(settings.DISCORD_DISPLAY_NAME):
             return
-
+            
         print('Message from {0.author}: {0.content}'.format(message))
 
         if message.content.startswith("!start_hangman"):
@@ -102,18 +105,35 @@ class Hangmanbot(discord.Client):
                 await message.channel.send("Can only start hangman in text or group channels")
                 return
             
-            await message.delete()
+            try:
+                await message.delete()
+            except discord.Forbidden:
+                await message.channel.send(f"Doesn't have permission to delete start message... please fix your permissions and try again")
+                return
+            except:
+                print("Unexpected Error", sys.exc_info()[0])
+                return
 
             self.states[message.channel.id] = Running(phrase)
-            await message.channel.send(f"{self.states.get(message.channel.id)}")
+            try:
+                await message.channel.send(f"{self.states.get(message.channel.id)}")
+            except:
+                print("Can't send messages to channel: {0}".format(message.channel))
         elif message.content.startswith("!guess"):
             if (message.channel.id not in self.states) and (not isinstance(self.states.get(message.channel.id), Running)):
-                await message.channel.send("No guess running in this channel. Please start with `!start_hangman ||<phrase>||` first")
+                try:
+                    await message.channel.send("No guess running in this channel. Please start with `!start_hangman ||<phrase>||` first")
+                except:
+                    print("Can't send messages to channel: {0}".format(message.channel))
                 return
 
             guess = message.content.replace("!guess", "").strip()
             self.states[message.channel.id] = self.states.get(message.channel.id).guess(guess, message.author)
-            await message.channel.send(f"{self.states[message.channel.id]}")
+            
+            try:
+                await message.channel.send(f"{self.states[message.channel.id]}")
+            except:
+                print("Can't send messages to channel: {0}".format(message.channel))
 
             if isinstance(self.states.get(message.channel.id), Solved):
                 del self.states[message.channel.id]
