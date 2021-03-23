@@ -1,7 +1,14 @@
-.PHONY: init run
+.PHONY: init run package clean
 
 init:
 	python3 -m pip install -r requirements.txt
 
 run:
 	python3 hangmanbot.py
+
+package:
+	python3 -m pip install pyinstaller
+	python3 -O -m PyInstaller --onefile hangmanbot.py
+
+clean:
+	rm -r build dist
