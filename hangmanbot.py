@@ -66,7 +66,7 @@ class Solved(State):
         self.solver = solver
 
     def __str__(self) -> str:
-        return f"__Solved!__ @{self.solver} won and guessed the word `{self.word}`"
+        return f"__Solved!__ {self.solver.mention} won and guessed the word `{self.word}`"
 
 class Failed(State):
     word: str
