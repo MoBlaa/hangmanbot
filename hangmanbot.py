@@ -1,15 +1,14 @@
 import logging
 import settings
 import discord
+from discord.ext import commands
 
 logging.basicConfig(level=logging.INFO)
 
-class Hangmanbot(discord.Client):
-    async def on_ready(self):
-        print('Logged in as {0}'.format(self.user))
+bot = commands.Bot(command_prefix="!")
 
-    async def on_message(self, message):
-        print('Message from {0.author}: {0.content}'.format(message))
+@bot.command()
+async def ping(ctx: commands.Context):
+    await ctx.send("Pong")
 
-client = Hangmanbot()
-client.run(settings.DISCORD_TOKEN)
+bot.run(settings.DISCORD_TOKEN)
