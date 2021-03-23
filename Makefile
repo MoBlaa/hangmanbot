@@ -10,5 +10,9 @@ package:
 	python3 -m pip install pyinstaller
 	python3 -O -m PyInstaller --onefile hangmanbot.py
 
+fmt:
+	python3 -m pip install yapf
+	yapf --in-place *.py
+
 clean:
 	rm -r build dist
