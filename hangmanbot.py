@@ -90,10 +90,12 @@ class Hangmanbot(discord.Client):
         print('Message from {0.author}: {0.content}'.format(message))
 
         if message.content.startswith("!start"):
-            word = message.content.replace("!start", "").strip()
+            word = message.content.replace("!start", "").strip(" |")
             if len(word) <= 2:
                 raise ValueError("Word has to be at least 3 characters long")
             
+            await message.delete()
+
             self.state = Running(word)
             await message.channel.send(f"{self.state}")
         elif message.content.startswith("!guess"):
