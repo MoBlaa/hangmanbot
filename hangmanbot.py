@@ -21,6 +21,7 @@ class Running(State):
         self.word = word
         self.unveiled = [False for _ in range(len(word))]
         self.wrong_guesses = 0
+        self.__solve(lambda char: not char.isalnum())
 
     def __unveiled(self) -> str:
         result = ""
@@ -31,14 +32,18 @@ class Running(State):
                 result += " _ "
         return result
     
+    def __solve(self, guess) -> bool:
+        contained = False
+        for index, char in enumerate(self.word):
+            if guess(char):
+                contained = True
+                self.unveiled[index] = True
+        return contained
+
     def guess(self, guess: str, guesser: discord.Member):
         """Guessing a single character or the whole word"""
         if len(guess) == 1:
-            contained = False
-            for index, char in enumerate(self.word):
-                if char.lower() == guess.lower():
-                    contained = True
-                    self.unveiled[index] = True
+            contained = self.__solve(lambda char: char.lower() == guess.lower())
             
             if not contained:
                 self.wrong_guesses += 1
@@ -66,7 +71,7 @@ class Solved(State):
         self.solver = solver
 
     def __str__(self) -> str:
-        return f"__Solved!__ {self.solver.mention} won and guessed the word `{self.word}`"
+        return f"__Solved!__ {self.solver.mention} won and guessed the phrase `{self.word}`"
 
 class Failed(State):
     word: str
