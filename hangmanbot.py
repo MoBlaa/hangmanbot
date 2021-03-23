@@ -93,6 +93,7 @@ async def on_ready():
     print("Logged in as {0}".format(bot.user))
 
 @bot.command(name="start_hangman")
+@commands.bot_has_permissions(manage_messages=True)
 async def __start_hangman(ctx: commands.Context, phrase: str):
     channel_id = ctx.channel.id
     phrase = phrase.replace("!start_hangman", "").strip(" |")
@@ -102,41 +103,33 @@ async def __start_hangman(ctx: commands.Context, phrase: str):
         await ctx.send("Can only start hangman in text or group channels")
         return
             
-    try:
-        await ctx.message.delete()
-    except discord.Forbidden:
-        await ctx.send(f"Doesn't have permission to delete start message... please fix your permissions and try again")
-        return
-    except:
-        print("Unexpected Error", sys.exc_info()[0])
-        return
+    await ctx.message.delete()
 
     states[channel_id] = Running(phrase)
-    try:
-        await ctx.send(f"{states.get(channel_id)}")
-    except:
-        print("Can't send messages to channel: {0}".format(ctx.channel))
+    await ctx.send(f"{states.get(channel_id)}")
 
 @bot.command(name="guess")
-async def guess(ctx: commands.Context, guess: str):
+async def __guess(ctx: commands.Context, guess: str):
     channel_id = ctx.channel.id
     if (channel_id not in states) and (not isinstance(states.get(channel_id), Running)):
-        try:
-            await ctx.send("No guess running in this channel. Please start with `!start_hangman ||<phrase>||` first")
-        except:
-            print("Can't send messages to channel: {0}".format(ctx.channel))
+        await ctx.send("No guess running in this channel. Please start with `!start_hangman ||<phrase>||` first")
         return
 
     guess = guess.strip()
     states[channel_id] = states.get(channel_id).guess(guess, ctx.author)
-            
-    try:
-        await ctx.send(f"{states[channel_id]}")
-    except:
-        print("Can't send messages to channel: {0}".format(ctx.channel))
+        
+    await ctx.send(f"{states[channel_id]}")
 
     if isinstance(states.get(channel_id), Solved):
         del states[channel_id]
             
+
+@__start_hangman.error
+@__guess.error
+async def handle_error(ctx: commands.Context, error):
+    if isinstance(error, commands.BotMissingPermissions):
+        await ctx.channel.send("Bot is Missing permissions: manage_messages (to delete the start message)")
+        return
+    print("Error: {0}".format(error))
 
 bot.run(settings.DISCORD_TOKEN)
