@@ -88,51 +88,55 @@ states = {}
 
 bot = commands.Bot(command_prefix="!")
 
+@bot.event
+async def on_ready():
+    print("Logged in as {0}".format(bot.user))
+
 @bot.command(name="start_hangman")
-async def __start_hangman(ctx: commands.Context, arg):
-    message: discord.Message = ctx.message
-    phrase = message.content.replace("!start_hangman", "").strip(" |")
+async def __start_hangman(ctx: commands.Context, phrase: str):
+    channel_id = ctx.channel.id
+    phrase = phrase.replace("!start_hangman", "").strip(" |")
     if len(phrase) <= 2:
         raise ValueError("Word has to be at least 3 characters long")
-    if not isinstance(message.channel, discord.TextChannel) and not isinstance(message.channel, discord.GroupChannel):
-        await message.channel.send("Can only start hangman in text or group channels")
+    if not isinstance(ctx.channel, discord.TextChannel) and not isinstance(ctx.channel, discord.GroupChannel):
+        await ctx.send("Can only start hangman in text or group channels")
         return
             
     try:
-        await message.delete()
+        await ctx.message.delete()
     except discord.Forbidden:
-        await message.channel.send(f"Doesn't have permission to delete start message... please fix your permissions and try again")
+        await ctx.send(f"Doesn't have permission to delete start message... please fix your permissions and try again")
         return
     except:
         print("Unexpected Error", sys.exc_info()[0])
         return
 
-    states[message.channel.id] = Running(phrase)
+    states[channel_id] = Running(phrase)
     try:
-        await message.channel.send(f"{states.get(message.channel.id)}")
+        await ctx.send(f"{states.get(channel_id)}")
     except:
-        print("Can't send messages to channel: {0}".format(message.channel))
+        print("Can't send messages to channel: {0}".format(ctx.channel))
 
 @bot.command(name="guess")
-async def guess(ctx: commands.Context, arg):
-    message: discord.Message = ctx.message
-    if (message.channel.id not in states) and (not isinstance(states.get(message.channel.id), Running)):
+async def guess(ctx: commands.Context, guess: str):
+    channel_id = ctx.channel.id
+    if (channel_id not in states) and (not isinstance(states.get(channel_id), Running)):
         try:
-            await message.channel.send("No guess running in this channel. Please start with `!start_hangman ||<phrase>||` first")
+            await ctx.send("No guess running in this channel. Please start with `!start_hangman ||<phrase>||` first")
         except:
-            print("Can't send messages to channel: {0}".format(message.channel))
+            print("Can't send messages to channel: {0}".format(ctx.channel))
         return
 
-    guess = message.content.replace("!guess", "").strip()
-    states[message.channel.id] = states.get(message.channel.id).guess(guess, message.author)
+    guess = guess.strip()
+    states[channel_id] = states.get(channel_id).guess(guess, ctx.author)
             
     try:
-        await message.channel.send(f"{states[message.channel.id]}")
+        await ctx.send(f"{states[channel_id]}")
     except:
-        print("Can't send messages to channel: {0}".format(message.channel))
+        print("Can't send messages to channel: {0}".format(ctx.channel))
 
-    if isinstance(states.get(message.channel.id), Solved):
-        del states[message.channel.id]
+    if isinstance(states.get(channel_id), Solved):
+        del states[channel_id]
             
 
 bot.run(settings.DISCORD_TOKEN)
