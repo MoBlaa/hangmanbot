@@ -30,6 +30,7 @@ class Running(State):
     phrase: str
     unveiled: [bool]
     wrong_guesses: int
+    guessed: {str}
 
     def __init__(self, phrase: str):
         if not phrase:
@@ -38,6 +39,7 @@ class Running(State):
         self.unveiled = [False for _ in range(len(phrase))]
         self.wrong_guesses = 0
         self.__solve(lambda char: not char.isalnum())
+        self.guessed = set()
 
     def __unveiled(self) -> str:
         result = ""
@@ -46,6 +48,12 @@ class Running(State):
                 result += f" {self.phrase[index]} "
             else:
                 result += " _ "
+        return result
+
+    def __guessed(self) -> str:
+        result = ""
+        for char in self.guessed:
+            result += f" ~~{char}~~"
         return result
 
     def __solve(self, guess) -> bool:
@@ -58,13 +66,20 @@ class Running(State):
 
     def guess(self, guess: str, guesser: discord.Member):
         """Guessing a single character or the whole phrase"""
+        guess = guess.lower()
         if len(guess) == 1:
+            if guess in self.guessed:
+                self.wrong_guesses += 1
+                return self
+
             contained = self.__solve(
-                lambda char: char.lower() == guess.lower())
+                lambda char: char.lower() == guess)
 
             if not contained:
                 self.wrong_guesses += 1
-        elif self.phrase.lower() == guess.lower():
+
+            self.guessed.add(guess)
+        elif self.phrase.lower() == guess:
             return Solved(phrase=self.phrase, solver=guesser)
         else:
             self.wrong_guesses += 1
