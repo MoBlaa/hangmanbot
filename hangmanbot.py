@@ -133,7 +133,7 @@ async def on_ready():
     print("Logged in as {0}".format(bot.user))
 
 
-@bot.command(name="start_hangman")
+@bot.command(name="start_hangman", aliases=["s"])
 @commands.bot_has_permissions(manage_messages=True)
 async def __start_hangman(ctx: commands.Context, *, phrase: str):
     channel_id = ctx.channel.id
@@ -156,7 +156,7 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
     await ctx.send(f"{states.get(channel_id)}")
 
 
-@bot.command(name="guess")
+@bot.command(name="guess", aliases=["g"])
 async def __guess(ctx: commands.Context, guess: str):
     channel_id = ctx.channel.id
     if (channel_id not in states) and (not isinstance(states.get(channel_id),
