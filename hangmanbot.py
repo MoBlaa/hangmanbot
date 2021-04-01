@@ -138,7 +138,7 @@ async def on_ready():
 async def __start_hangman(ctx: commands.Context, *, phrase: str):
     channel_id = ctx.channel.id
 
-    if isinstance(states[channel_id], Running):
+    if (channel_id in states) and isinstance(states[channel_id], Running):
         await ctx.send("A game is still running!")
         return
 
