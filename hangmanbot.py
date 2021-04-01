@@ -159,7 +159,8 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
 
     phrase = phrase.replace("!start_hangman", "").strip(" |")
     if len(phrase) <= 2:
-        raise ValueError("Word has to be at least 3 characters long")
+        await ctx.send("Phrase has to be at least 3 characters long")
+        return
     if not isinstance(ctx.channel, discord.TextChannel) and not isinstance(
             ctx.channel, discord.GroupChannel):
         await ctx.send("Can only start hangman in text or group channels")
@@ -172,7 +173,7 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
 
 
 @bot.command(name="guess", aliases=["g"])
-async def __guess(ctx: commands.Context, guess: str):
+async def __guess(ctx: commands.Context, *, guess: str):
     channel_id = ctx.channel.id
     if (channel_id not in states) and (not isinstance(states.get(channel_id),
                                                       Running)):
