@@ -203,4 +203,5 @@ async def __handle_error(ctx: commands.Context, error):
     print("Error: {0}".format(error))
 
 
-bot.run(DISCORD_TOKEN)
+if __name__ == '__main__':
+    bot.run(DISCORD_TOKEN)
