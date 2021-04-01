@@ -1,13 +1,25 @@
+"""Discord Bot implementing a simple Hangman game."""
+
+from __future__ import annotations
 import logging
-from settings import DISCORD_TOKEN
 import discord
 from discord.ext import commands
+from settings import DISCORD_TOKEN
 
 logging.basicConfig(level=logging.INFO)
 
 
 class State:
-    def guess(self, guess: str, guesser: discord.Member):
+    """Superclass for all States of the hangman game"""
+
+    def guess(self, _guess: str, _guesser: discord.Member) -> State:
+        """Process a guess of a discord member.
+
+        Args:
+              _guess (str): The guessed phrase or character.
+              _guesser (discord.Member): The discord member which guessed.
+
+        """
         return self
 
 
@@ -15,6 +27,8 @@ MAX_GUESSES = 5
 
 
 class Running(State):
+    """Hangman game is currently running and is not yet solved or failed."""
+
     phrase: str
     unveiled: [bool]
     wrong_guesses: int
@@ -59,16 +73,25 @@ class Running(State):
 
         if self.wrong_guesses >= MAX_GUESSES:
             return Failed(self.phrase)
-        elif all(self.unveiled):
+        if all(self.unveiled):
             return Solved(phrase=self.phrase, solver=guesser)
-        else:
-            return self
+        return self
 
     def __str__(self) -> str:
-        return f"Remaining Bad Guesses:\t{MAX_GUESSES - self.wrong_guesses}\n```\n{self.__unveiled()}\n```"
+        return f"Remaining Bad Guesses:\t{MAX_GUESSES - self.wrong_guesses}" \
+               f"```" \
+               f"{self.__unveiled()}" \
+               f"```"
 
 
 class Solved(State):
+    """Hangman game was solved.
+
+    Attributes:
+        phrase (str): Phrase of the solved game.
+        solver (discord.Member): Member which solved the game.
+
+    """
     phrase: str
     solver: discord.Member
 
@@ -81,6 +104,12 @@ class Solved(State):
 
 
 class Failed(State):
+    """Hangman game failed for the given phrase.
+
+    Attributes:
+        phrase (str): Phrase of the failed game.
+
+    """
     phrase: str
 
     def __init__(self, phrase: str):
@@ -97,6 +126,7 @@ bot = commands.Bot(command_prefix="!")
 
 @bot.event
 async def on_ready():
+    """Runs if the bot is ready"""
     print("Logged in as {0}".format(bot.user))
 
 
@@ -124,7 +154,8 @@ async def __guess(ctx: commands.Context, guess: str):
     if (channel_id not in states) and (not isinstance(states.get(channel_id),
                                                       Running)):
         await ctx.send(
-            "No guess running in this channel. Please start with `!start_hangman ||<phrase>||` first"
+            "No guess running in this channel. "
+            "Please start with `!start_hangman ||<phrase>||` first"
         )
         return
 
@@ -139,7 +170,7 @@ async def __guess(ctx: commands.Context, guess: str):
 
 @__start_hangman.error
 @__guess.error
-async def handle_error(ctx: commands.Context, error):
+async def __handle_error(ctx: commands.Context, error):
     if isinstance(error, commands.BotMissingPermissions):
         await ctx.channel.send(
             "Bot is Missing permissions: manage_messages (to delete the start message)"
