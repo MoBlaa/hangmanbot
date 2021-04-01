@@ -119,7 +119,7 @@ class Failed(State):
         return f"```" \
                f"{HANGMANS[MAX_GUESSES]}" \
                f"```" \
-               f"__Failed!__ The phrase was '{self.phrase}'" \
+               f"__Failed!__ The phrase was ||{self.phrase}||" \
 
 
 states = {}
