@@ -56,9 +56,6 @@ class Running(State):
                 self.unveiled[index] = True
         return contained
 
-    def __remaining_guesses(self) -> int:
-        return MAX_GUESSES - self.wrong_guesses
-
     def guess(self, guess: str, guesser: discord.Member):
         """Guessing a single character or the whole phrase"""
         if len(guess) == 1:
@@ -79,8 +76,9 @@ class Running(State):
         return self
 
     def __str__(self) -> str:
-        remaining = self.__remaining_guesses()
-        return f"{HANGMANS[remaining]}" \
+        return f"```" \
+               f"{HANGMANS[self.wrong_guesses]}" \
+               f"```" \
                f"```" \
                f"{self.__unveiled()}" \
                f"```"
@@ -118,7 +116,12 @@ class Failed(State):
         self.phrase = phrase
 
     def __str__(self) -> str:
-        return f"__Failed!__ The phrase was `{self.phrase}`"
+        return f"```" \
+               f"{HANGMANS[MAX_GUESSES]}" \
+               f"```" \
+               f"```" \
+               f"__Failed!__ The phrase was `{self.phrase}`" \
+               f"```"
 
 
 states = {}
@@ -134,7 +137,7 @@ async def on_ready():
 
 @bot.command(name="start_hangman")
 @commands.bot_has_permissions(manage_messages=True)
-async def __start_hangman(ctx: commands.Context, phrase: str):
+async def __start_hangman(ctx: commands.Context, *, phrase: str):
     channel_id = ctx.channel.id
     phrase = phrase.replace("!start_hangman", "").strip(" |")
     if len(phrase) <= 2:

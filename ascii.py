@@ -51,4 +51,4 @@ HANGMANS = ['''
       |
 =========''']
 
-MAX_GUESSES = len(HANGMANS)
+MAX_GUESSES = len(HANGMANS) - 1
