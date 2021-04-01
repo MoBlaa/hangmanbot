@@ -38,7 +38,7 @@ class Running(State):
         self.phrase = phrase
         self.unveiled = [False for _ in range(len(phrase))]
         self.wrong_guesses = 0
-        self.__solve(lambda char: not char.isalnum())
+        self.__solve(lambda char: not char.isalpha())
         self.guessed = set()
 
     def __unveiled(self) -> str:
