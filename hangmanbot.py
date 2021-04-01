@@ -5,6 +5,7 @@ import logging
 import discord
 from discord.ext import commands
 from settings import DISCORD_TOKEN
+from ascii import MAX_GUESSES, HANGMANS
 
 logging.basicConfig(level=logging.INFO)
 
@@ -21,9 +22,6 @@ class State:
 
         """
         return self
-
-
-MAX_GUESSES = 5
 
 
 class Running(State):
@@ -58,6 +56,9 @@ class Running(State):
                 self.unveiled[index] = True
         return contained
 
+    def __remaining_guesses(self) -> int:
+        return MAX_GUESSES - self.wrong_guesses
+
     def guess(self, guess: str, guesser: discord.Member):
         """Guessing a single character or the whole phrase"""
         if len(guess) == 1:
@@ -78,7 +79,8 @@ class Running(State):
         return self
 
     def __str__(self) -> str:
-        return f"Remaining Bad Guesses:\t{MAX_GUESSES - self.wrong_guesses}" \
+        remaining = self.__remaining_guesses()
+        return f"{HANGMANS[remaining]}" \
                f"```" \
                f"{self.__unveiled()}" \
                f"```"
