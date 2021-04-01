@@ -137,6 +137,11 @@ async def on_ready():
 @commands.bot_has_permissions(manage_messages=True)
 async def __start_hangman(ctx: commands.Context, *, phrase: str):
     channel_id = ctx.channel.id
+
+    if isinstance(states[channel_id], Running):
+        await ctx.send("A game is still running!")
+        return
+
     phrase = phrase.replace("!start_hangman", "").strip(" |")
     if len(phrase) <= 2:
         raise ValueError("Word has to be at least 3 characters long")
