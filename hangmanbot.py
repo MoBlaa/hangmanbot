@@ -1,8 +1,6 @@
 import logging
-import settings
+from settings import DISCORD_TOKEN
 import discord
-import sys
-from enum import Enum
 from discord.ext import commands
 
 logging.basicConfig(level=logging.INFO)
@@ -150,4 +148,4 @@ async def handle_error(ctx: commands.Context, error):
     print("Error: {0}".format(error))
 
 
-bot.run(settings.DISCORD_TOKEN)
+bot.run(DISCORD_TOKEN)
