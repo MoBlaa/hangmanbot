@@ -4,7 +4,7 @@ import logging
 import discord
 from discord.ext import commands
 from settings import DISCORD_TOKEN
-from states import States, Running, Solved
+from states import States, Running, Solved, Failed
 
 logging.basicConfig(level=logging.INFO)
 
@@ -18,6 +18,21 @@ bot = commands.Bot(command_prefix="!")
 async def on_ready():
     """Runs if the bot is ready"""
     print("Logged in as {0}".format(bot.user))
+
+
+@bot.command(name="remove", aliases=["rm"])
+async def __remove(ctx: commands.Context):
+    channel_id = ctx.channel.id
+    user_id = ctx.author.id
+    if (channel_id not in states) or (not isinstance(states[channel_id], Running)):
+        await ctx.send("No game to reset...")
+    state = states[channel_id]
+    if isinstance(state, Running):
+        if state.author_id == user_id or ctx.author.server_permissions.administrator:
+            del states[channel_id]
+            await ctx.send("Current game was removed!")
+        else:
+            await ctx.send("You're not allowed to reset the game (not author of game or admin of server)")
 
 
 @bot.command(name="start_hangman", aliases=["s"])
@@ -40,15 +55,14 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
 
     await ctx.message.delete()
 
-    states[channel_id] = Running(phrase)
+    states[channel_id] = Running(phrase, author_id=ctx.author.id)
     await ctx.send(f"{states[channel_id]}")
 
 
 @bot.command(name="guess", aliases=["g"])
 async def __guess(ctx: commands.Context, *, guess: str):
     channel_id = ctx.channel.id
-    if (channel_id not in states) and (not isinstance(states[channel_id],
-                                                      Running)):
+    if channel_id not in states:
         await ctx.send(
             "No guess running in this channel. "
             "Please start with `!start_hangman ||<phrase>||` first"
@@ -57,11 +71,15 @@ async def __guess(ctx: commands.Context, *, guess: str):
 
     guess = guess.strip()
     old_state = states[channel_id]
+    if isinstance(old_state, Running) and old_state.author_id == ctx.author.id:
+        await ctx.send("Authors are only allowed to reset the current game!")
+        return
+
     new_state = old_state.guess(guess, ctx.author)
 
     await ctx.send(f"{new_state}")
 
-    if isinstance(new_state, Solved):
+    if isinstance(new_state, (Solved, Failed)):
         del states[channel_id]
     else:
         states[channel_id] = new_state
@@ -69,6 +87,7 @@ async def __guess(ctx: commands.Context, *, guess: str):
 
 @__start_hangman.error
 @__guess.error
+@__remove.error
 async def __handle_error(ctx: commands.Context, error):
     if isinstance(error, commands.BotMissingPermissions):
         await ctx.channel.send(

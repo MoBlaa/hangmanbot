@@ -28,6 +28,7 @@ class State:
 class Running(State):
     """Hangman game is currently running and is not yet solved or failed."""
 
+    author_id: int
     phrase: str
     unveiled: [bool]
     wrong_guesses: int
@@ -37,18 +38,21 @@ class Running(State):
     def from_json(cls, data: dict) -> Running:
         """Parses this class from json deserialized data"""
         return Running(phrase=data['phrase'],
+                       author_id=data['author_id'],
                        unveiled=data['unveiled'],
                        wrong_guesses=data['wrong_guesses'],
                        guessed=set(data['guessed']))
 
     def __init__(self,
                  phrase: str,
+                 author_id: int,
                  unveiled: [bool] = None,
                  wrong_guesses: int = None,
                  guessed: {str} = None):
         if not phrase:
             raise ValueError("Word has to be a non empty string")
         self.phrase = phrase
+        self.author_id = author_id
         if not unveiled:
             self.unveiled = [False for _ in range(len(phrase))]
         else:
@@ -82,6 +86,9 @@ class Running(State):
 
     def guess(self, guess: str, guesser: discord.Member):
         """Guessing a single character or the whole phrase"""
+        if guesser.id == self.author_id:
+            return self
+
         guess = guess.lower()
         if len(guess) == 1:
             if guess in self.guessed:
@@ -96,14 +103,14 @@ class Running(State):
 
             self.guessed.add(guess)
         elif self.phrase.lower() == guess:
-            return Solved(phrase=self.phrase, solver=guesser)
+            return Solved(phrase=self.phrase, solver_mention=guesser.mention)
         else:
             self.wrong_guesses += 1
 
         if self.wrong_guesses >= MAX_GUESSES:
             return Failed(self.phrase)
         if all(self.unveiled):
-            return Solved(phrase=self.phrase, solver=guesser)
+            return Solved(phrase=self.phrase, solver_mention=guesser.mention)
         return self
 
     def __str__(self) -> str:
@@ -126,7 +133,7 @@ class Solved(State):
 
     Attributes:
         phrase (str): Phrase of the solved game.
-        solver (discord.Member): Member which solved the game.
+        solver_mention (str): Mention String of the Member who solved the game.
 
     """
     phrase: str
@@ -135,11 +142,11 @@ class Solved(State):
     @classmethod
     def from_json(cls, data: dict) -> Solved:
         """Parses this class from json deserialized data"""
-        return Solved(phrase=data['phrase'], solver=data['solver'])
+        return Solved(phrase=data['phrase'], solver_mention=data['solver'])
 
-    def __init__(self, phrase: str, solver: discord.Member):
+    def __init__(self, phrase: str, solver_mention: str):
         self.phrase = phrase
-        self.solver_mention = solver.mention
+        self.solver_mention = solver_mention
 
     def __str__(self) -> str:
         return f"__Solved!__ {self.solver_mention} won and guessed the phrase `{self.phrase}`"

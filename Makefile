@@ -3,7 +3,7 @@
 init:
 	python3 -m pip install -r requirements.txt
 
-run:
+run: init
 	python3 hangmanbot/__main__.py
 
 package-win:

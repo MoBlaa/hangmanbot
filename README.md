@@ -1,17 +1,29 @@
 # Hangman Discord Bot
 
-__Requirements:__ The Bot has to be added to your Server/Group and requires to have the permission to delete messages (Edit Messages).
+The HangmanBot is hosted by the developer himself on a raspberrypi. So no guarantees on uptimes. If you want to control it by yourself create a Bot account and follow the [Hosting it yourself](#hosting-it-yourself) section.
 
-Create `.env` file with the following content in the root of the project:
+If you just want to invite the bot hosted by the developer to your server: [Here you go](https://discord.com/api/oauth2/authorize?client_id=827469612329074754&permissions=10240&scope=bot).
+
+## Hosting it yourself
+
+__Requirements:__ The Bot has to be added to your Server/Group and requires to have the permission to send and delete messages (Send + Edit Messages).
+
+Clone the repository, follow instructions in [Environment Setup](#environment-setup) and start the Bot with either `python3 hangmanbot/__main__.py` or `make run`.
+
+You can also build an executable with `make package` (python3 and pip required) and distribute the executable file `dist/hangmanbot` (Python3 is still required to run this file).
+
+### Environment setup
+
+Create `.env` file with the following content in the execution directory:
 
 ```env
 TOKEN=<your bot login token>
-USERNAME=<username of the bot>
 ```
 
-and start the Bot with either `python3 hangmanbot.py` or `make run`.
+or set the environment variable `TOKEN=<your bot login token>` on the machine the bot will run on.
 
 ## Commands
 
-- `!start_hangman ||<word>||`: Start the game with the word inside the spoiler. The word has to be __at least 3 characters long__. This message will be deleted so be sure to configure your roles right.
-- `!guess <character | word>`: Guess a single character or the whole word.
+- `!start_hangman ||<phrase>||` or `!s ||<phrase>||`: Start the game with the phrase inside the spoiler. The phrase has to be __at least 3 characters long__. This message will be deleted so be sure to configure your roles right.
+- `!guess <character | word>` or `!g <character | word>`: Guess a single character or the whole word.
+- `!remove` or `!rm`: Admin of the server or author of the game can delete the current game.
