@@ -1,144 +1,15 @@
 """Discord Bot implementing a simple Hangman game."""
 
-from __future__ import annotations
 import logging
 import discord
 from discord.ext import commands
 from settings import DISCORD_TOKEN
-from ascii import MAX_GUESSES, HANGMANS
+from states import States, Running, Solved
 
 logging.basicConfig(level=logging.INFO)
 
 
-class State:
-    """Superclass for all States of the hangman game"""
-
-    def guess(self, _guess: str, _guesser: discord.Member) -> State:
-        """Process a guess of a discord member.
-
-        Args:
-              _guess (str): The guessed phrase or character.
-              _guesser (discord.Member): The discord member which guessed.
-
-        """
-        return self
-
-
-class Running(State):
-    """Hangman game is currently running and is not yet solved or failed."""
-
-    phrase: str
-    unveiled: [bool]
-    wrong_guesses: int
-    guessed: {str}
-
-    def __init__(self, phrase: str):
-        if not phrase:
-            raise ValueError("Word has to be a non empty string")
-        self.phrase = phrase
-        self.unveiled = [False for _ in range(len(phrase))]
-        self.wrong_guesses = 0
-        self.__solve(lambda char: not char.isalpha())
-        self.guessed = set()
-
-    def __unveiled(self) -> str:
-        result = ""
-        for index, char in enumerate(self.unveiled):
-            if char:
-                result += f" {self.phrase[index]} "
-            else:
-                result += " _ "
-        return result
-
-    def __guessed(self) -> str:
-        result = ""
-        for char in self.guessed:
-            result += f" ~~{char}~~"
-        return result
-
-    def __solve(self, guess) -> bool:
-        contained = False
-        for index, char in enumerate(self.phrase):
-            if guess(char):
-                contained = True
-                self.unveiled[index] = True
-        return contained
-
-    def guess(self, guess: str, guesser: discord.Member):
-        """Guessing a single character or the whole phrase"""
-        guess = guess.lower()
-        if len(guess) == 1:
-            if guess in self.guessed:
-                self.wrong_guesses += 1
-                return self
-
-            contained = self.__solve(
-                lambda char: char.lower() == guess)
-
-            if not contained:
-                self.wrong_guesses += 1
-
-            self.guessed.add(guess)
-        elif self.phrase.lower() == guess:
-            return Solved(phrase=self.phrase, solver=guesser)
-        else:
-            self.wrong_guesses += 1
-
-        if self.wrong_guesses >= MAX_GUESSES:
-            return Failed(self.phrase)
-        if all(self.unveiled):
-            return Solved(phrase=self.phrase, solver=guesser)
-        return self
-
-    def __str__(self) -> str:
-        return f"```" \
-               f"{HANGMANS[self.wrong_guesses]}" \
-               f"```" \
-               f"```" \
-               f"{self.__unveiled()}" \
-               f"```"
-
-
-class Solved(State):
-    """Hangman game was solved.
-
-    Attributes:
-        phrase (str): Phrase of the solved game.
-        solver (discord.Member): Member which solved the game.
-
-    """
-    phrase: str
-    solver: discord.Member
-
-    def __init__(self, phrase: str, solver: discord.Member):
-        self.phrase = phrase
-        self.solver = solver
-
-    def __str__(self) -> str:
-        return f"__Solved!__ {self.solver.mention} won and guessed the phrase `{self.phrase}`"
-
-
-class Failed(State):
-    """Hangman game failed for the given phrase.
-
-    Attributes:
-        phrase (str): Phrase of the failed game.
-
-    """
-    phrase: str
-
-    def __init__(self, phrase: str):
-        self.phrase = phrase
-
-    def __str__(self) -> str:
-        return f"```" \
-               f"{HANGMANS[MAX_GUESSES]}" \
-               f"```" \
-               f"__Failed!__ The phrase was ||{self.phrase}||" \
-
-
-
-states = {}
+states = States.load()
 
 bot = commands.Bot(command_prefix="!")
 
@@ -170,13 +41,13 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
     await ctx.message.delete()
 
     states[channel_id] = Running(phrase)
-    await ctx.send(f"{states.get(channel_id)}")
+    await ctx.send(f"{states[channel_id]}")
 
 
 @bot.command(name="guess", aliases=["g"])
 async def __guess(ctx: commands.Context, *, guess: str):
     channel_id = ctx.channel.id
-    if (channel_id not in states) and (not isinstance(states.get(channel_id),
+    if (channel_id not in states) and (not isinstance(states[channel_id],
                                                       Running)):
         await ctx.send(
             "No guess running in this channel. "
@@ -185,11 +56,12 @@ async def __guess(ctx: commands.Context, *, guess: str):
         return
 
     guess = guess.strip()
-    states[channel_id] = states.get(channel_id).guess(guess, ctx.author)
+    old_state = states[channel_id]
+    states[channel_id] = old_state.guess(guess, ctx.author)
 
     await ctx.send(f"{states[channel_id]}")
 
-    if isinstance(states.get(channel_id), Solved):
+    if isinstance(states[channel_id], Solved):
         del states[channel_id]
 
 
