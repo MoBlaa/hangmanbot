@@ -130,7 +130,7 @@ class Solved(State):
 
     """
     phrase: str
-    solver: discord.Member
+    solver_mention: str
 
     @classmethod
     def from_json(cls, data: dict) -> Solved:
@@ -139,10 +139,10 @@ class Solved(State):
 
     def __init__(self, phrase: str, solver: discord.Member):
         self.phrase = phrase
-        self.solver = solver
+        self.solver_mention = solver.mention
 
     def __str__(self) -> str:
-        return f"__Solved!__ {self.solver.mention} won and guessed the phrase `{self.phrase}`"
+        return f"__Solved!__ {self.solver_mention} won and guessed the phrase `{self.phrase}`"
 
 
 class Failed(State):
@@ -248,7 +248,7 @@ class StatesEncoder(json.JSONEncoder):
             return {
                 'Solved': {
                     'phrase': o.phrase,
-                    'solver': o.solver,
+                    'solver': o.solver_mention,
                 }
             }
         if isinstance(o, Failed):

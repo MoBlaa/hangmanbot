@@ -57,12 +57,14 @@ async def __guess(ctx: commands.Context, *, guess: str):
 
     guess = guess.strip()
     old_state = states[channel_id]
-    states[channel_id] = old_state.guess(guess, ctx.author)
+    new_state = old_state.guess(guess, ctx.author)
 
-    await ctx.send(f"{states[channel_id]}")
+    await ctx.send(f"{new_state}")
 
-    if isinstance(states[channel_id], Solved):
+    if isinstance(new_state, Solved):
         del states[channel_id]
+    else:
+        states[channel_id] = new_state
 
 
 @__start_hangman.error
