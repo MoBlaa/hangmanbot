@@ -137,6 +137,7 @@ class Failed(State):
                f"__Failed!__ The phrase was ||{self.phrase}||" \
 
 
+
 states = {}
 
 bot = commands.Bot(command_prefix="!")
