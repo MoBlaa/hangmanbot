@@ -1,23 +1,18 @@
 .PHONY: init run package clean package-win
 
 init:
-	python3 -m pip install -r requirements.txt
+	python3 -m pip install -r requirements.txt --target hangmanbot
 
 run:
-	python3 __main__.py
+	python3 hangmanbot/__main__.py
 
 package-win:
 	python3 -m pip install pyinstaller
-	python3 -O -m PyInstaller --onefile __main__.py
+	python3 -O -m PyInstaller --onefile hangmanbot/__main__.py
 
-package:
-	zip -r ../hangmanbot.zip *
-	echo '#!/usr/bin/env python' | cat - ../hangmanbot.zip > hangmanbot
-	chmod +x ../hangmanbot.zip
-
-fmt:
-	python3 -m pip install yapf
-	yapf --in-place *.py
+package: init
+	python3 -m pip install zipapp
+	python -m zipapp -p "/usr/bin/env python3" hangmanbot
 
 clean:
 	rm -r build dist
