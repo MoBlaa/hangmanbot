@@ -65,7 +65,7 @@ async def __guess(ctx: commands.Context, *, guess: str):
     if channel_id not in states:
         await ctx.send(
             "No guess running in this channel. "
-            "Please start with `!start_hangman ||<phrase>||` first"
+            "Please start with `!s ||<phrase>||` first"
         )
         return
 

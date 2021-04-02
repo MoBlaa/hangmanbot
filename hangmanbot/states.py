@@ -119,7 +119,8 @@ class Running(State):
                f"```" \
                f"```" \
                f"{self.__unveiled()}" \
-               f"```"
+               f"```" \
+               f"Guess with `!g` or `!guess`"
 
     def __repr__(self):
         return f"Running(phrase={self.phrase}," \
