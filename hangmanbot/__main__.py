@@ -5,12 +5,14 @@ import discord
 from discord.ext import commands
 from settings import DISCORD_TOKEN
 from states import States, Running, Solved, Failed
-from cooldowns import cooldowns, Cooldown
+from cooldowns import Cooldown
 
 logging.basicConfig(level=logging.INFO)
 
 
 states = States.load()
+
+cooldowns: {(int, int): Cooldown} = {}
 
 bot = commands.Bot(command_prefix="!")
 

@@ -32,6 +32,3 @@ class Cooldown:
 
     def __repr__(self):
         return f"Cooldown({self.__created.__repr__()}, {self.__seconds.__repr__()})"
-
-
-cooldowns: {(int, int): Cooldown} = {}
