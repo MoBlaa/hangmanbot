@@ -128,6 +128,7 @@ async def __guess(ctx: commands.Context, *, guess: str):
             and (cooldown_id not in remove_cooldowns):
         remove_cooldowns[cooldown_id] = Cooldown(seconds=60)
     states[channel_id] = new_state
+    guess_cooldowns.clear()
     guess_cooldowns[cooldown_id] = Cooldown()
 
 
