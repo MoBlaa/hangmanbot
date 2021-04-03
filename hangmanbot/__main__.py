@@ -42,18 +42,19 @@ async def __remove(ctx: commands.Context):
 async def __start_hangman(ctx: commands.Context, *, phrase: str):
     channel_id = ctx.channel.id
     author_id = ctx.author.id
-
-    if author_id in cooldowns:
-        cooldown = cooldowns[author_id]
-        if cooldown.expired():
-            del cooldowns[author_id]
-        else:
-            await ctx.send(f"{ctx.author.mention} still has a cooldown of {cooldown.expires_in()}")
-            return
+    cooldown_id = (author_id, channel_id)
 
     if (channel_id in states) and isinstance(states[channel_id], Running):
         await ctx.send("A game is still running!")
         return
+
+    if cooldown_id in cooldowns:
+        cooldown = cooldowns[cooldown_id]
+        if cooldown.expired():
+            del cooldowns[cooldown_id]
+        else:
+            await ctx.send(f"{ctx.author.mention} still has a cooldown of {cooldown.expires_in()}")
+            return
 
     phrase = phrase.replace("!start_hangman", "").strip(" |")
     if len(phrase) <= 2:
@@ -67,6 +68,8 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
     await ctx.message.delete()
 
     states[channel_id] = Running(phrase, author_id=ctx.author.id)
+    cooldowns[cooldown_id] = Cooldown()
+
     await ctx.send(f"{states[channel_id]}")
 
 
@@ -74,15 +77,7 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
 async def __guess(ctx: commands.Context, *, guess: str):
     channel_id = ctx.channel.id
     author_id = ctx.author.id
-
-    if author_id in cooldowns:
-        cooldown = cooldowns[author_id]
-        if cooldown.expired():
-            del cooldowns[author_id]
-        else:
-            await ctx.send(f"{ctx.author.mention} still has a "
-                           f"cooldown of {cooldown.expires_in()}s!")
-            return
+    cooldown_id = (author_id, channel_id)
 
     if channel_id not in states:
         await ctx.send(
@@ -90,6 +85,15 @@ async def __guess(ctx: commands.Context, *, guess: str):
             "Please start with `!s ||<phrase>||` first"
         )
         return
+
+    if cooldown_id in cooldowns:
+        cooldown = cooldowns[cooldown_id]
+        if cooldown.expired():
+            del cooldowns[cooldown_id]
+        else:
+            await ctx.send(f"{ctx.author.mention} still has a "
+                           f"cooldown of {cooldown.expires_in()}s!")
+            return
 
     guess = guess.strip()
     old_state = states[channel_id]
@@ -99,13 +103,13 @@ async def __guess(ctx: commands.Context, *, guess: str):
 
     new_state = old_state.guess(guess, ctx.author)
 
-    cooldowns[author_id] = Cooldown()
+    cooldowns[cooldown_id] = Cooldown()
 
     await ctx.send(f"{new_state}")
 
     if isinstance(new_state, (Solved, Failed)):
         # Also add Cooldown for users which started the game so others can start a game
-        cooldowns[author_id] = Cooldown()
+        cooldowns[cooldown_id] = Cooldown()
 
         del states[channel_id]
     else:
