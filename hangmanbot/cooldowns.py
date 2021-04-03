@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-COOLDOWN_SECONDS = 30
+COOLDOWN_SECONDS = 10
 
 
 class Cooldown:
