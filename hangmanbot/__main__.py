@@ -86,6 +86,11 @@ async def __guess(ctx: commands.Context, *, guess: str):
         )
         return
 
+    old_state = states[channel_id]
+    if isinstance(old_state, Running) and old_state.author_id == author_id:
+        await ctx.send("Authors are only allowed to reset the current game!")
+        return
+
     if cooldown_id in cooldowns:
         cooldown = cooldowns[cooldown_id]
         if cooldown.expired():
@@ -96,11 +101,6 @@ async def __guess(ctx: commands.Context, *, guess: str):
             return
 
     guess = guess.strip()
-    old_state = states[channel_id]
-    if isinstance(old_state, Running) and old_state.author_id == author_id:
-        await ctx.send("Authors are only allowed to reset the current game!")
-        return
-
     new_state = old_state.guess(guess, ctx.author)
 
     cooldowns[cooldown_id] = Cooldown()
