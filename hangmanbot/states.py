@@ -248,6 +248,7 @@ class StatesEncoder(json.JSONEncoder):
                 'Running': {
                     'phrase': o.phrase,
                     'unveiled': o.unveiled,
+                    'author_id': o.author_id,
                     'wrong_guesses': o.wrong_guesses,
                     'guessed': list(o.guessed),
                 }
