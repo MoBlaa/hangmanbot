@@ -14,6 +14,8 @@ states = States.load()
 
 cooldowns: {(int, int): Cooldown} = {}
 
+remove_cooldowns: {(int, int): Cooldown} = {}
+
 bot = commands.Bot(command_prefix="!")
 
 
@@ -26,12 +28,18 @@ async def on_ready():
 @bot.command(name="remove", aliases=["rm"])
 async def __remove(ctx: commands.Context):
     channel_id = ctx.channel.id
-    user_id = ctx.author.id
+    author_id = ctx.author.id
+    cooldown_id = (author_id, channel_id)
     if (channel_id not in states) or (not isinstance(states[channel_id], Running)):
         await ctx.send("No game to reset...")
+    if cooldown_id in remove_cooldowns:
+        cooldown = remove_cooldowns[cooldown_id]
+        if not cooldown.expired():
+            await ctx.send(f"{ctx.author.mention} removing allowed in {cooldown.expires_in()}s")
+            return
     state = states[channel_id]
     if isinstance(state, Running):
-        if state.author_id == user_id or ctx.author.server_permissions.administrator:
+        if state.author_id == author_id or ctx.author.server_permissions.administrator:
             del states[channel_id]
             await ctx.send("Current game was removed!")
         else:
@@ -114,8 +122,12 @@ async def __guess(ctx: commands.Context, *, guess: str):
         cooldowns[cooldown_id] = Cooldown()
 
         del states[channel_id]
-    else:
-        states[channel_id] = new_state
+        del remove_cooldowns[cooldown_id]
+    if isinstance(new_state, Running) \
+            and new_state.guessing_started() \
+            and (cooldown_id not in remove_cooldowns):
+        remove_cooldowns[cooldown_id] = Cooldown(seconds=60)
+    states[channel_id] = new_state
 
 
 @__start_hangman.error

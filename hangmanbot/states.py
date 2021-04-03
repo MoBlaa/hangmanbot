@@ -84,6 +84,10 @@ class Running(State):
                 self.unveiled[index] = True
         return contained
 
+    def guessing_started(self) -> bool:
+        """Returns if someone has already started guessing"""
+        return bool(self.guessed)
+
     def guess(self, guess: str, guesser: discord.Member):
         """Guessing a single character or the whole phrase"""
         if guesser.id == self.author_id:
