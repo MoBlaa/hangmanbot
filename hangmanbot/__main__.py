@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 from settings import DISCORD_TOKEN
 from states import States, Running, Solved, Failed
+from cooldowns import cooldowns, Cooldown
 
 logging.basicConfig(level=logging.INFO)
 
@@ -32,13 +33,23 @@ async def __remove(ctx: commands.Context):
             del states[channel_id]
             await ctx.send("Current game was removed!")
         else:
-            await ctx.send("You're not allowed to reset the game (not author of game or admin of server)")
+            await ctx.send("You're not allowed to reset the game "
+                           "(not author of game or admin of server)")
 
 
 @bot.command(name="start_hangman", aliases=["s"])
 @commands.bot_has_permissions(manage_messages=True)
 async def __start_hangman(ctx: commands.Context, *, phrase: str):
     channel_id = ctx.channel.id
+    author_id = ctx.author.id
+
+    if author_id in cooldowns:
+        cooldown = cooldowns[author_id]
+        if cooldown.expired():
+            del cooldowns[author_id]
+        else:
+            await ctx.send(f"{ctx.author.mention} still has a cooldown of {cooldown.expires_in()}")
+            return
 
     if (channel_id in states) and isinstance(states[channel_id], Running):
         await ctx.send("A game is still running!")
@@ -62,6 +73,17 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
 @bot.command(name="guess", aliases=["g"])
 async def __guess(ctx: commands.Context, *, guess: str):
     channel_id = ctx.channel.id
+    author_id = ctx.author.id
+
+    if author_id in cooldowns:
+        cooldown = cooldowns[author_id]
+        if cooldown.expired():
+            del cooldowns[author_id]
+        else:
+            await ctx.send(f"{ctx.author.mention} still has a "
+                           f"cooldown of {cooldown.expires_in()}s!")
+            return
+
     if channel_id not in states:
         await ctx.send(
             "No guess running in this channel. "
@@ -71,15 +93,20 @@ async def __guess(ctx: commands.Context, *, guess: str):
 
     guess = guess.strip()
     old_state = states[channel_id]
-    if isinstance(old_state, Running) and old_state.author_id == ctx.author.id:
+    if isinstance(old_state, Running) and old_state.author_id == author_id:
         await ctx.send("Authors are only allowed to reset the current game!")
         return
 
     new_state = old_state.guess(guess, ctx.author)
 
+    cooldowns[author_id] = Cooldown()
+
     await ctx.send(f"{new_state}")
 
     if isinstance(new_state, (Solved, Failed)):
+        # Also add Cooldown for users which started the game so others can start a game
+        cooldowns[author_id] = Cooldown()
+
         del states[channel_id]
     else:
         states[channel_id] = new_state
