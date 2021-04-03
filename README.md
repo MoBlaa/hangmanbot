@@ -27,3 +27,11 @@ or set the environment variable `TOKEN=<your bot login token>` on the machine th
 - `!start_hangman ||<phrase>||` or `!s ||<phrase>||`: Start the game with the phrase inside the spoiler. The phrase has to be __at least 3 characters long__. This message will be deleted so be sure to configure your roles right.
 - `!guess <character | word>` or `!g <character | word>`: Guess a single character or the whole word.
 - `!remove` or `!rm`: Admin of the server or author of the game can delete the current game.
+
+## Features
+
+- Play Hangman (obviously)
+- Cooldowns for:
+    - Guessing
+    - Author of previous game starting a new game
+    - Removing the current game after at least one player has started guessing. Removing is still possible after creation and before first player has started guessing.
