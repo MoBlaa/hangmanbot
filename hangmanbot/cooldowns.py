@@ -4,11 +4,13 @@ import json
 import sys
 import os
 from datetime import datetime
-from enum import Enum
+from enum import IntEnum
+from typing import Any
+
 from settings import CONFIG_DIR, COOLDOWNS_FILE
 
 
-class CooldownType(Enum):
+class CooldownType(IntEnum):
     """Type of a cooldown"""
 
     REMOVE = 1
@@ -56,12 +58,17 @@ class Cooldowns:
     __remove_cooldowns: {(int, int): Cooldown} = dict()
     __guess_cooldowns: {(int, int): Cooldown} = dict()
     __start_cooldowns: {(int, int): Cooldown} = dict()
-    __guess_cooldown_values: {(CooldownType, int): int}
+    cooldown_values: {(CooldownType, int): int} = dict()
 
     @classmethod
-    def from_json(cls, data: dict):
+    def from_json(cls, data: [dict]):
         """Creates a instance of Cooldowns from json data"""
-        return cls(guess_cooldown_values=data.get('guess_cooldowns'))
+        print(f"Loaded cooldowns: {data}")
+        cooldowns = dict()
+        for cooldown in data:
+            cd_type, channel, value = cooldown['type'], cooldown['channel'], cooldown['value']
+            cooldowns[(CooldownType(cd_type), channel)] = value
+        return cls(guess_cooldown_values=cooldowns)
 
     @classmethod
     def load(cls):
@@ -73,8 +80,8 @@ class Cooldowns:
             print(f"Failed to read states file: {err}")
             return cls()
 
-    def __init__(self, guess_cooldown_values: {int: int} = None):
-        self.__guess_cooldown_values = guess_cooldown_values if guess_cooldown_values else {}
+    def __init__(self, guess_cooldown_values: {(CooldownType, int): int} = None):
+        self.cooldown_values = guess_cooldown_values if guess_cooldown_values else {}
 
     def __getitem__(self, item: (CooldownType, int, int)) -> Cooldown:
         cd_type, author, channel = item
@@ -93,7 +100,7 @@ class Cooldowns:
         return self.__guess_cooldowns.__contains__((author, channel))
 
     def __save(self):
-        serialized = json.dumps({'guess_cooldowns': self.__guess_cooldowns})
+        serialized = json.dumps(self, cls=CooldownsEncoder)
         try:
             os.makedirs(CONFIG_DIR, exist_ok=True)
             states_file = open(COOLDOWNS_FILE, "w")
@@ -103,7 +110,7 @@ class Cooldowns:
             sys.exit(1)
 
     def __get_cooldown_seconds_for(self, key: (CooldownType, int)) -> int:
-        seconds = self.__guess_cooldown_values.get(key)
+        seconds = self.cooldown_values.get(key)
         if seconds:
             return seconds
         cd_type, _ = key
@@ -115,11 +122,14 @@ class Cooldowns:
 
     def set_cooldown(self, key: (CooldownType, int), value: int):
         """Sets a cooldown value for a type and channel"""
-        self.__guess_cooldown_values[key] = value if value else 0
+        self.cooldown_values[key] = value if value else 0
+        self.__save()
 
     def get_cooldown(self, key: (CooldownType, int)) -> Cooldown:
         """Gets a cooldown value for a type and channel"""
-        return self.__guess_cooldown_values.get(key)
+        return Cooldown(self.cooldown_values.get(
+            key,
+            self.__get_cooldown_seconds_for(key)))
 
     def add_for(self, key: (CooldownType, int, int), cooldown: Cooldown = None):
         """Creates a cooldown for the given key (type, author_id, channel_id) and
@@ -132,6 +142,7 @@ class Cooldowns:
         if cd_type == CooldownType.REMOVE:
             self.__remove_cooldowns[(author, channel)] = cooldown
         self.__guess_cooldowns[(author, channel)] = cooldown
+        self.__save()
 
     def clear(self, cd_type: CooldownType):
         """Clears a type of cooldown"""
@@ -140,3 +151,15 @@ class Cooldowns:
         if cd_type == CooldownType.REMOVE:
             self.__remove_cooldowns.clear()
         self.__guess_cooldowns.clear()
+
+
+class CooldownsEncoder(json.JSONEncoder):
+    """Implements serializing cooldowns to json"""
+    def default(self, o: Any) -> Any:
+        if isinstance(o, Cooldowns):
+            cooldowns = []
+            for key, value in o.cooldown_values.items():
+                cd_type, channel = key
+                cooldowns.append({'type': int(cd_type), 'channel': channel, 'value': value})
+            return cooldowns
+        return super().default(o)
