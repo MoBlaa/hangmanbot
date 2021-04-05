@@ -175,6 +175,7 @@ async def __guess(ctx: commands.Context, *, guess: str):
 @__guess.error
 @__remove.error
 @__cooldown_edit.error
+@__get_cooldown.error
 async def __handle_error(ctx: commands.Context, error):
     if isinstance(error, commands.BotMissingPermissions):
         await ctx.channel.send(
