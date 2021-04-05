@@ -72,9 +72,9 @@ class Running(State):
 
     def __guessed(self) -> str:
         result = ""
-        for char in self.guessed:
-            result += f" ~~{char}~~"
-        return result
+        for char in sorted(self.guessed):
+            result += f"{char.upper()} "
+        return result + ""
 
     def __solve(self, guess) -> bool:
         contained = False
@@ -119,7 +119,8 @@ class Running(State):
 
     def __str__(self) -> str:
         return f"```" \
-               f"{HANGMANS[self.wrong_guesses]}" \
+               f"{HANGMANS[self.wrong_guesses]}\n" \
+               f"{self.__guessed()}" \
                f"```" \
                f"```" \
                f"{self.__unveiled()}" \
