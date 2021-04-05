@@ -19,11 +19,11 @@ class CooldownType(Enum):
 class Cooldown:
     """A Cooldown of a single user"""
     __created: datetime
-    __seconds: int
+    seconds: int
 
     def __init__(self, seconds: int):
         self.__created = datetime.now()
-        self.__seconds = seconds
+        self.seconds = seconds
 
     def __seconds_since(self) -> int:
         now = datetime.now()
@@ -32,17 +32,17 @@ class Cooldown:
 
     def expired(self) -> bool:
         """Returns if enough time has passed since creation of the cooldown"""
-        return self.__seconds_since() >= self.__seconds
+        return self.__seconds_since() >= self.seconds
 
     def expires_in(self) -> int:
         """Returns the seconds till the cooldown is expired"""
-        return self.__seconds - self.__seconds_since()
+        return self.seconds - self.__seconds_since()
 
     def __str__(self):
-        return f"Cooldown(at {self.__created} for {self.__seconds}s)"
+        return f"Cooldown(at {self.__created} for {self.seconds}s)"
 
     def __repr__(self):
-        return f"Cooldown({self.__created.__repr__()}, {self.__seconds.__repr__()})"
+        return f"Cooldown({self.__created.__repr__()}, {self.seconds.__repr__()})"
 
 
 DEFAULT_RM_COOLDOWN: int = 60
@@ -116,6 +116,10 @@ class Cooldowns:
     def set_cooldown(self, key: (CooldownType, int), value: int):
         """Sets a cooldown value for a type and channel"""
         self.__guess_cooldown_values[key] = value if value else 0
+
+    def get_cooldown(self, key: (CooldownType, int)) -> Cooldown:
+        """Gets a cooldown value for a type and channel"""
+        return self.__guess_cooldown_values.get(key)
 
     def add_for(self, key: (CooldownType, int, int), cooldown: Cooldown = None):
         """Creates a cooldown for the given key (type, author_id, channel_id) and
