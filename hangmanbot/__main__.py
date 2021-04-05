@@ -5,18 +5,14 @@ import discord
 from discord.ext import commands
 from settings import DISCORD_TOKEN
 from states import States, Running, Solved, Failed
-from cooldowns import Cooldown
+from cooldowns import Cooldowns, CooldownType
 
 logging.basicConfig(level=logging.INFO)
 
 
 states = States.load()
 
-start_cooldowns: {(int, int): Cooldown} = {}
-
-guess_cooldowns: {(int, int): Cooldown} = {}
-
-remove_cooldowns: {(int, int): Cooldown} = {}
+cooldowns = Cooldowns.load()
 
 bot = commands.Bot(command_prefix="!")
 
@@ -31,11 +27,11 @@ async def on_ready():
 async def __remove(ctx: commands.Context):
     channel_id = ctx.channel.id
     author_id = ctx.author.id
-    cooldown_id = (author_id, channel_id)
+    cooldown_id = (CooldownType.REMOVE, author_id, channel_id)
     if (channel_id not in states) or (not isinstance(states[channel_id], Running)):
         await ctx.send("No game to reset...")
-    if cooldown_id in remove_cooldowns:
-        cooldown = remove_cooldowns[cooldown_id]
+    if cooldown_id in cooldowns:
+        cooldown = cooldowns[cooldown_id]
         if not cooldown.expired():
             await ctx.send(f"{ctx.author.mention} removing allowed in {cooldown.expires_in()}s")
             return
@@ -54,16 +50,16 @@ async def __remove(ctx: commands.Context):
 async def __start_hangman(ctx: commands.Context, *, phrase: str):
     channel_id = ctx.channel.id
     author_id = ctx.author.id
-    cooldown_id = (author_id, channel_id)
+    cooldown_id = (CooldownType.START, author_id, channel_id)
 
     if (channel_id in states) and isinstance(states[channel_id], Running):
         await ctx.send("A game is still running!")
         return
 
-    if cooldown_id in start_cooldowns:
-        cooldown = start_cooldowns[cooldown_id]
+    if cooldown_id in cooldowns:
+        cooldown = cooldowns[cooldown_id]
         if cooldown.expired():
-            del start_cooldowns[cooldown_id]
+            del cooldowns[cooldown_id]
         else:
             await ctx.send(f"{ctx.author.mention} still has a cooldown of {cooldown.expires_in()}")
             return
@@ -80,7 +76,7 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
     await ctx.message.delete()
 
     states[channel_id] = Running(phrase, author_id=ctx.author.id)
-    start_cooldowns[cooldown_id] = Cooldown()
+    cooldowns.add_for(cooldown_id)
 
     await ctx.send(f"{states[channel_id]}")
 
@@ -89,7 +85,9 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
 async def __guess(ctx: commands.Context, *, guess: str):
     channel_id = ctx.channel.id
     author_id = ctx.author.id
-    cooldown_id = (author_id, channel_id)
+    guess_cooldown_id = (CooldownType.GUESS, author_id, channel_id)
+    remove_cooldown_id = (CooldownType.REMOVE, author_id, channel_id)
+    start_cooldown_id = (CooldownType.START, author_id, channel_id)
 
     if channel_id not in states:
         await ctx.send(
@@ -103,10 +101,10 @@ async def __guess(ctx: commands.Context, *, guess: str):
         await ctx.send("Authors are only allowed to reset the current game!")
         return
 
-    if cooldown_id in guess_cooldowns:
-        cooldown = guess_cooldowns[cooldown_id]
+    if guess_cooldown_id in cooldowns:
+        cooldown = cooldowns[guess_cooldown_id]
         if cooldown.expired():
-            del guess_cooldowns[cooldown_id]
+            del cooldowns[guess_cooldown_id]
         else:
             await ctx.send(f"{ctx.author.mention} still has a "
                            f"cooldown of {cooldown.expires_in()}s!")
@@ -114,24 +112,23 @@ async def __guess(ctx: commands.Context, *, guess: str):
 
     guess = guess.strip()
     new_state = old_state.guess(guess, ctx.author)
+    states[channel_id] = new_state
 
     await ctx.send(f"{new_state}")
 
     if isinstance(new_state, (Solved, Failed)):
         # Also add Cooldown for users which started the game so others can start a game
-        start_cooldowns[cooldown_id] = Cooldown()
+        cooldowns.add_for(start_cooldown_id)
 
         del states[channel_id]
-        del remove_cooldowns[cooldown_id]
-        guess_cooldowns.clear()
-        return
+        # Cooldown on remove should be cleared to save space
+        del cooldowns[remove_cooldown_id]
     if isinstance(new_state, Running) \
             and new_state.guessing_started() \
-            and (cooldown_id not in remove_cooldowns):
-        remove_cooldowns[cooldown_id] = Cooldown(seconds=60)
-    states[channel_id] = new_state
-    guess_cooldowns.clear()
-    guess_cooldowns[cooldown_id] = Cooldown()
+            and (remove_cooldown_id not in cooldowns):
+        cooldowns.add_for(remove_cooldown_id)
+    cooldowns.clear(CooldownType.GUESS)
+    cooldowns.add_for(guess_cooldown_id)
 
 
 @__start_hangman.error
