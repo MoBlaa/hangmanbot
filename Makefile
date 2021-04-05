@@ -14,9 +14,9 @@ package:
 	mkdir -p dist/exec
 	cp -r hangmanbot/* dist/exec/
 	python3 -m pip install -r requirements.txt --target dist/exec/
-	cd dist/exec && zip -r ../hangmanbot.zip .
+	cd dist/exec && zip -r ../hangmanbot.zip . -x '*__pycache__*'
 	echo "#!/usr/bin/env python3" | cat - dist/hangmanbot.zip > dist/hangmanbot
 	chmod +x dist/hangmanbot
 
 clean:
-	rm -r build dist
+	rm -rf build dist
