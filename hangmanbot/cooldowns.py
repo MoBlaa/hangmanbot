@@ -74,7 +74,7 @@ class Cooldowns:
             return cls()
 
     def __init__(self, guess_cooldown_values: {int: int} = None):
-        self.__guess_cooldown_calues = guess_cooldown_values if guess_cooldown_values else {}
+        self.__guess_cooldown_values = guess_cooldown_values if guess_cooldown_values else {}
 
     def __getitem__(self, item: (CooldownType, int, int)) -> Cooldown:
         cd_type, author, channel = item
@@ -112,6 +112,10 @@ class Cooldowns:
         if cd_type == CooldownType.REMOVE:
             return DEFAULT_RM_COOLDOWN
         return DEFAULT_GUESS_COOLDOWN
+
+    def set_cooldown(self, key: (CooldownType, int), value: int):
+        """Sets a cooldown value for a type and channel"""
+        self.__guess_cooldown_values[key] = value if value else 0
 
     def add_for(self, key: (CooldownType, int, int), cooldown: Cooldown = None):
         """Creates a cooldown for the given key (type, author_id, channel_id) and
