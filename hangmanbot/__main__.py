@@ -36,7 +36,7 @@ async def __cooldown_edit(ctx: commands.Context, cd_type: str, value: int):
     if cd_type in {'s', 'start_hangman'}:
         cooldowns.set_cooldown((CooldownType.START, channel_id), value)
     else:
-        await ctx.send(f"Unknown cooldown type '{cd_type}'."
+        await ctx.send(f"Unknown cooldown type '{cd_type}'. "
                        f"Supported: 'rm|remove', 'g|guess', 's|start_hangman'")
         return
 

@@ -67,7 +67,7 @@ class Cooldowns:
     def load(cls):
         """Reads persisted states of hangman games"""
         try:
-            serialized = open(CONFIG_DIR, "r").read()
+            serialized = open(COOLDOWNS_FILE, "r").read()
             return cls.from_json(json.loads(serialized))
         except OSError as err:
             print(f"Failed to read states file: {err}")
