@@ -31,16 +31,16 @@ async def __cooldown_edit(ctx: commands.Context, cd_type: str, value: int):
 
     if cd_type in {'rm', 'remove'}:
         cooldowns.set_cooldown((CooldownType.REMOVE, channel_id), value)
-    if cd_type in {'guess', 'g'}:
+    elif cd_type in {'guess', 'g'}:
         cooldowns.set_cooldown((CooldownType.GUESS, channel_id), value)
-    if cd_type in {'s', 'start_hangman'}:
+    elif cd_type in {'s', 'start_hangman'}:
         cooldowns.set_cooldown((CooldownType.START, channel_id), value)
     else:
         await ctx.send(f"Unknown cooldown type '{cd_type}'. "
                        f"Supported: 'rm|remove', 'g|guess', 's|start_hangman'")
         return
 
-    await ctx.send(f"Successfully set cooldown of 'cd_type' to {value}s")
+    await ctx.send(f"Successfully set cooldown of '{cd_type}' to {value}s")
 
 
 @bot.command(name="remove", aliases=["rm"])
