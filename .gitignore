@@ -156,6 +156,7 @@ cython_debug/
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+.idea/pylint.xml
 
 # Generated files
 .idea/**/contentModel.xml

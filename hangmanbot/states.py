@@ -84,6 +84,10 @@ class Running(State):
                 self.unveiled[index] = True
         return contained
 
+    def guessing_started(self) -> bool:
+        """Returns if someone has already started guessing"""
+        return bool(self.guessed)
+
     def guess(self, guess: str, guesser: discord.Member):
         """Guessing a single character or the whole phrase"""
         if guesser.id == self.author_id:
@@ -218,11 +222,11 @@ class States:
         states = {}
         for key, val in data.items():
             key: int = int(key)
-            if "Solved" in val:
+            if 'Solved' in val:
                 states[key] = Solved.from_json(val['Solved'])
-            if "Failed" in val:
+            elif 'Failed' in val:
                 states[key] = Failed.from_json(val['Failed'])
-            if "Running" in val:
+            elif 'Running' in val:
                 states[key] = Running.from_json(val['Running'])
             else:
                 raise ValueError(f'Expected "Solved", "Failed" or "Running": {val}')
@@ -248,6 +252,7 @@ class StatesEncoder(json.JSONEncoder):
                 'Running': {
                     'phrase': o.phrase,
                     'unveiled': o.unveiled,
+                    'author_id': o.author_id,
                     'wrong_guesses': o.wrong_guesses,
                     'guessed': list(o.guessed),
                 }
