@@ -123,6 +123,8 @@ async def __guess(ctx: commands.Context, *, guess: str):
 
         del states[channel_id]
         del remove_cooldowns[cooldown_id]
+        guess_cooldowns.clear()
+        return
     if isinstance(new_state, Running) \
             and new_state.guessing_started() \
             and (cooldown_id not in remove_cooldowns):
