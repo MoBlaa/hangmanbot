@@ -20,7 +20,47 @@ bot = commands.Bot(command_prefix="!")
 @bot.event
 async def on_ready():
     """Runs if the bot is ready"""
-    print("Logged in as {0}".format(bot.user))
+    logging.info("Logged in as %s", bot.user)
+
+
+@bot.command(name="cooldown-get", aliases=["cd", "cooldown"])
+@commands.has_permissions(administrator=True)
+async def __get_cooldown(ctx: commands.Context, cd_type: str = None):
+    channel_id = ctx.channel.id
+    cd_type = cd_type.strip().lower()
+
+    if cd_type in {'rm', 'remove'}:
+        value = cooldowns.get_cooldown((CooldownType.REMOVE, channel_id))
+    elif cd_type in {'guess', 'g'}:
+        value = cooldowns.get_cooldown((CooldownType.GUESS, channel_id))
+    elif cd_type in {'s', 'start_hangman'}:
+        value = cooldowns.get_cooldown((CooldownType.START, channel_id))
+    else:
+        await ctx.send(f"Unknown cooldown type '{cd_type}'. "
+                       f"Supported: 'rm|remove', 'g|guess', 's|start_hangman'")
+        return
+    value = f"{value.seconds}s" if value else "None"
+    await ctx.send(f"Cooldown for '{cd_type}' in this channel: {value}")
+
+
+@bot.command(name="cooldown-edit", aliases=["cd-edit", "cd-e"])
+@commands.has_permissions(administrator=True)
+async def __cooldown_edit(ctx: commands.Context, cd_type: str, value: int):
+    channel_id = ctx.channel.id
+    cd_type = cd_type.strip().lower()
+
+    if cd_type in {'rm', 'remove'}:
+        cooldowns.set_cooldown((CooldownType.REMOVE, channel_id), value)
+    elif cd_type in {'guess', 'g'}:
+        cooldowns.set_cooldown((CooldownType.GUESS, channel_id), value)
+    elif cd_type in {'s', 'start_hangman'}:
+        cooldowns.set_cooldown((CooldownType.START, channel_id), value)
+    else:
+        await ctx.send(f"Unknown cooldown type '{cd_type}'. "
+                       f"Supported: 'rm|remove', 'g|guess', 's|start_hangman'")
+        return
+
+    await ctx.send(f"Successfully set cooldown of '{cd_type}' to {value}s")
 
 
 @bot.command(name="cooldown-get", aliases=["cd", "cooldown"])
@@ -182,7 +222,7 @@ async def __handle_error(ctx: commands.Context, error):
             "Bot is Missing permissions: manage_messages (to delete the start message)"
         )
         return
-    print("Error: {0}".format(error))
+    logging.error("Error: %s", error)
 
 
 if __name__ == '__main__':

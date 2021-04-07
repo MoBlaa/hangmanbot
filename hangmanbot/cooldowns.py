@@ -1,6 +1,7 @@
 """Cooldowns of user actions"""
 
 import json
+import logging
 import sys
 import os
 from datetime import datetime
@@ -63,7 +64,7 @@ class Cooldowns:
     @classmethod
     def from_json(cls, data: [dict]):
         """Creates a instance of Cooldowns from json data"""
-        print(f"Loaded cooldowns: {data}")
+        logging.debug("Loaded cooldowns: %s", data)
         cooldowns = dict()
         for cooldown in data:
             cd_type, channel, value = cooldown['type'], cooldown['channel'], cooldown['value']
@@ -77,7 +78,7 @@ class Cooldowns:
             serialized = open(COOLDOWNS_FILE, "r").read()
             return cls.from_json(json.loads(serialized))
         except OSError as err:
-            print(f"Failed to read states file: {err}")
+            logging.debug("No Cooldowns file found to load (%s)", err)
             return cls()
 
     def __init__(self, guess_cooldown_values: {(CooldownType, int): int} = None):
@@ -118,7 +119,7 @@ class Cooldowns:
             states_file = open(COOLDOWNS_FILE, "w")
             states_file.write(serialized)
         except OSError as err:
-            print(f"Couldn't write cooldowns file: {err}")
+            logging.error("Couldn't write cooldowns file: %s", err)
             sys.exit(1)
 
     def __get_cooldown_seconds_for(self, key: (CooldownType, int)) -> int:
