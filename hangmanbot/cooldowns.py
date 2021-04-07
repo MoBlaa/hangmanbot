@@ -100,6 +100,17 @@ class Cooldowns:
             return self.__remove_cooldowns.__contains__((author, channel))
         return self.__guess_cooldowns.__contains__((author, channel))
 
+    def __delitem__(self, key: (CooldownType, int, int)):
+        cd_type, author, channel = key
+        if cd_type == CooldownType.START:
+            del self.__start_cooldowns[(author, channel)]
+        elif cd_type == CooldownType.REMOVE:
+            del self.__remove_cooldowns[(author, channel)]
+        elif cd_type == CooldownType.GUESS:
+            del self.__guess_cooldowns[(author, channel)]
+        else:
+            raise RuntimeError(f"Unsupported CooldownType: {cd_type}")
+
     def __save(self):
         serialized = json.dumps(self, cls=CooldownsEncoder)
         try:
