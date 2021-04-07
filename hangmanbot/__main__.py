@@ -20,7 +20,7 @@ bot = commands.Bot(command_prefix="!")
 @bot.event
 async def on_ready():
     """Runs if the bot is ready"""
-    print("Logged in as {0}".format(bot.user))
+    logging.info("Logged in as %s", bot.user)
 
 
 @bot.command(name="cooldown-get", aliases=["cd", "cooldown"])
@@ -182,7 +182,7 @@ async def __handle_error(ctx: commands.Context, error):
             "Bot is Missing permissions: manage_messages (to delete the start message)"
         )
         return
-    print("Error: {0}".format(error))
+    logging.error("Error: %s", error)
 
 
 if __name__ == '__main__':

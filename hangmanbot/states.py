@@ -1,6 +1,7 @@
 """States of hangman games"""
 
 from __future__ import annotations
+import logging
 import json
 import os
 import sys
@@ -213,7 +214,7 @@ class States:
             states_file = open(STATES_FILE, "w")
             states_file.write(serialized)
         except OSError as err:
-            print(f"Couldn't write states file: {err}")
+            logging.error("Couldn't write states file: %s", err)
             sys.exit(1)
 
     @classmethod
@@ -230,7 +231,7 @@ class States:
                 states[key] = Running.from_json(val['Running'])
             else:
                 raise ValueError(f'Expected "Solved", "Failed" or "Running": {val}')
-        print(f"Loaded States: {states}")
+        logging.debug("Loaded States: %s", states)
         return States(states)
 
     @classmethod
@@ -240,7 +241,7 @@ class States:
             serialized = open(STATES_FILE, "r").read()
             return cls.from_json(json.loads(serialized))
         except OSError as err:
-            print(f"Failed to read states file: {err}")
+            logging.debug("No states file found to load (%s)", err)
             return cls(states={})
 
 
