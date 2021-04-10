@@ -194,7 +194,7 @@ async def __guess(ctx: commands.Context, *, guess: str):
 async def __handle_error(ctx: commands.Context, error):
     if isinstance(error, commands.BotMissingPermissions):
         await ctx.channel.send(
-            "Bot is Missing permissions: manage_messages (to delete the start message)"
+            "Missing permission: manage_messages (to delete its own and command messages)"
         )
         return
     logging.error("Error: %s", error)
