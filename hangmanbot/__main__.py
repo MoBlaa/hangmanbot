@@ -111,11 +111,15 @@ async def __post_state(ctx: commands.Context):
             return
 
     state = states[channel_id]
+    # Create new state and only delet old state if new state posting was successful
     old_message = await ctx.fetch_message(state.post_id)
     new_message = await ctx.send(f"{state}")
     state.post_id = new_message.id
     await old_message.delete()
+
     cooldowns.add_for(cooldown_id)
+    # Delete !state message
+    await ctx.message.delete()
 
 
 @bot.command(name="start_hangman", aliases=["s"])
