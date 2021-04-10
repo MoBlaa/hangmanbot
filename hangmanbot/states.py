@@ -125,13 +125,14 @@ class Running(State):
 
     def __str__(self) -> str:
         return f"```" \
-               f"{HANGMANS[self.wrong_guesses]}\n" \
+               f"{HANGMANS[self.wrong_guesses]}\r\n" \
                f"{self.__guessed()}" \
                f"```" \
                f"```" \
                f"{self.__unveiled()}" \
                f"```" \
-               f"@{self.author_name}    Guess with `!g` or `!guess`"
+               f"\xa9{self.author_name}\r\n" \
+               f"Guess with `!g` or `!guess`"
 
     def __repr__(self):
         return f"Running(phrase={self.phrase}," \
@@ -265,6 +266,7 @@ class StatesEncoder(json.JSONEncoder):
                     'phrase': o.phrase,
                     'unveiled': o.unveiled,
                     'author_id': o.author_id,
+                    'author_name': o.author_name,
                     'post_id': o.post_id,
                     'wrong_guesses': o.wrong_guesses,
                     'guessed': list(o.guessed),
