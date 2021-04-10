@@ -199,22 +199,26 @@ async def __guess(ctx: commands.Context, *, guess: str):
 
     guess = guess.strip()
     new_state = old_state.guess(guess, ctx.author)
-
-    message = await ctx.fetch_message(new_state.post_id)
-    await message.edit(content=f"{new_state}")
     states[channel_id] = new_state
 
     if isinstance(new_state, (Solved, Failed)):
+        # Create new post so everyone is mentioned properly and gamestate is still
+        # visible after the game was finished
+        await ctx.send(f"{new_state}")
+
         # Also add Cooldown for users which started the game so others can start a game
         cooldowns.add_for(start_cooldown_id)
 
         del states[channel_id]
         # Cooldown on remove should be cleared to save space
         del cooldowns[remove_cooldown_id]
-    if isinstance(new_state, Running) \
-            and new_state.guessing_started() \
-            and (remove_cooldown_id not in cooldowns):
-        cooldowns.add_for(remove_cooldown_id)
+    if isinstance(new_state, Running):
+        # Edit game post if still running
+        message = await ctx.fetch_message(new_state.post_id)
+        await message.edit(content=f"{new_state}")
+
+        if new_state.guessing_started() and (remove_cooldown_id not in cooldowns):
+            cooldowns.add_for(remove_cooldown_id)
     cooldowns.clear(CooldownType.GUESS)
     cooldowns.add_for(guess_cooldown_id)
 
