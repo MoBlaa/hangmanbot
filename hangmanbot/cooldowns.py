@@ -163,9 +163,14 @@ class Cooldowns:
             self.__get_cooldown_seconds_for((cd_type, channel)))
         if cd_type == CooldownType.START:
             self.__start_cooldowns[(author, channel)] = cooldown
-        if cd_type == CooldownType.REMOVE:
+        elif cd_type == CooldownType.REMOVE:
             self.__remove_cooldowns[(author, channel)] = cooldown
-        self.__guess_cooldowns[(author, channel)] = cooldown
+        elif cd_type == CooldownType.GUESS:
+            self.__guess_cooldowns[(author, channel)] = cooldown
+        elif cd_type == CooldownType.STATE:
+            self.__guess_cooldowns[(author, channel)] = cooldown
+        else:
+            raise RuntimeError(f"Unsupported CooldownType: {cd_type}")
         self.__save()
 
     def clear(self, cd_type: CooldownType):
@@ -174,7 +179,10 @@ class Cooldowns:
             self.__start_cooldowns.clear()
         if cd_type == CooldownType.REMOVE:
             self.__remove_cooldowns.clear()
-        self.__guess_cooldowns.clear()
+        if cd_type == CooldownType.STATE:
+            self.__state_cooldowns.clear()
+        if cd_type == CooldownType.GUESS:
+            self.__guess_cooldowns.clear()
 
 
 class CooldownsEncoder(json.JSONEncoder):
