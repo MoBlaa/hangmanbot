@@ -39,6 +39,7 @@ class Running(State):
     unveiled: [bool]
     wrong_guesses: int
     guessed: {str}
+    participants: {str}
 
     @classmethod
     def from_json(cls, data: dict) -> Running:
@@ -49,16 +50,19 @@ class Running(State):
                        post_id=data['post_id'],
                        unveiled=data['unveiled'],
                        wrong_guesses=data['wrong_guesses'],
-                       guessed=set(data['guessed']))
+                       guessed=set(data['guessed']),
+                       participants=set(data['participants']))
 
-    def __init__(self, phrase: str, author_id: int, author_name: str, post_id: int = None, unveiled: [bool] = None,
-                 wrong_guesses: int = None, guessed: {str} = None):
+    def __init__(self, phrase: str, author_id: int, author_name: str, post_id: int = None,
+                 unveiled: [bool] = None, wrong_guesses: int = None, guessed: {str} = None,
+                 participants: {str} = None):
         super().__init__(post_id)
         if not phrase:
             raise ValueError("Word has to be a non empty string")
         self.phrase = phrase
         self.author_id = author_id
         self.author_name = author_name
+        self.participants = participants if participants else set()
         if not unveiled:
             self.unveiled = [False for _ in range(len(phrase))]
         else:
@@ -98,6 +102,7 @@ class Running(State):
         """Guessing a single character or the whole phrase"""
         if guesser.id == self.author_id:
             return self
+        self.participants.add(guesser.mention)
 
         guess = guess.lower()
         if len(guess) == 1:
@@ -113,14 +118,18 @@ class Running(State):
 
             self.guessed.add(guess)
         elif self.phrase.lower() == guess:
-            return Solved(phrase=self.phrase, solver_mention=guesser.mention, post_id=self.post_id)
+            return Solved(phrase=self.phrase,
+                          solver_mentions=self.participants,
+                          post_id=self.post_id)
         else:
             self.wrong_guesses += 1
 
         if self.wrong_guesses >= MAX_GUESSES:
             return Failed(self.phrase, post_id=self.post_id)
         if all(self.unveiled):
-            return Solved(phrase=self.phrase, solver_mention=guesser.mention, post_id=self.post_id)
+            return Solved(phrase=self.phrase,
+                          solver_mentions=self.participants,
+                          post_id=self.post_id)
         return self
 
     def __str__(self) -> str:
@@ -146,25 +155,28 @@ class Solved(State):
 
     Attributes:
         phrase (str): Phrase of the solved game.
-        solver_mention (str): Mention String of the Member who solved the game.
+        solver_mentions (str): Mention String of the Member who solved the game.
 
     """
     phrase: str
-    solver_mention: str
+    solver_mentions: {str}
 
     @classmethod
     def from_json(cls, data: dict) -> Solved:
         """Parses this class from json deserialized data"""
-        return Solved(phrase=data['phrase'], solver_mention=data['solver'], post_id=data['post_id'])
+        return Solved(phrase=data['phrase'],
+                      solver_mentions=data['solvers'],
+                      post_id=data['post_id'])
 
-    def __init__(self, phrase: str, solver_mention: str, post_id: int):
+    def __init__(self, phrase: str, solver_mentions: {str}, post_id: int):
         super().__init__(post_id)
         self.phrase = phrase
-        self.solver_mention = solver_mention
+        self.solver_mentions = solver_mentions
         self.post_id = post_id
 
     def __str__(self) -> str:
-        return f"__Solved!__ {self.solver_mention} won and guessed the phrase `{self.phrase}`"
+        solvers = ", ".join(self.solver_mentions)
+        return f"__Solved!__ {solvers} won and guessed the phrase `{self.phrase}`"
 
 
 class Failed(State):
@@ -270,6 +282,7 @@ class StatesEncoder(json.JSONEncoder):
                     'post_id': o.post_id,
                     'wrong_guesses': o.wrong_guesses,
                     'guessed': list(o.guessed),
+                    'participants': list(o.participants)
                 }
             }
         if isinstance(o, Solved):
@@ -277,7 +290,7 @@ class StatesEncoder(json.JSONEncoder):
                 'Solved': {
                     'post_id': o.post_id,
                     'phrase': o.phrase,
-                    'solver': o.solver_mention,
+                    'solvers': list(o.solver_mentions),
                 }
             }
         if isinstance(o, Failed):
