@@ -130,7 +130,7 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
 
 
 @bot.command(name="guess", aliases=["g"])
-@commands.has_permissions(manage_messages=True)
+@commands.bot_has_permissions(manage_messages=True)
 async def __guess(ctx: commands.Context, *, guess: str):
     channel_id = ctx.channel.id
     author_id = ctx.author.id
