@@ -57,7 +57,7 @@ async def __cooldown_edit(ctx: commands.Context, cd_type: str, value: int):
         cooldowns.set_cooldown((CooldownType.START, channel_id), value)
     else:
         await ctx.send(f"Unknown cooldown type '{cd_type}'. "
-                       f"Supported: 'rm|remove', 'g|guess', 's|start_hangman'")
+                       f"Supported: 'rm|remove', 'g|guess', 's|start_hangman'", delete_after=10)
         return
 
     await ctx.send(f"Successfully set cooldown of '{cd_type}' to {value}s", delete_after=5)
@@ -69,7 +69,7 @@ async def __remove(ctx: commands.Context):
     author_id = ctx.author.id
     cooldown_id = (CooldownType.REMOVE, author_id, channel_id)
     if (channel_id not in states) or (not isinstance(states[channel_id], Running)):
-        await ctx.send("No game to reset...")
+        await ctx.send("No game to reset...", delete_after=2)
     if cooldown_id in cooldowns:
         cooldown = cooldowns[cooldown_id]
         if not cooldown.expired():
@@ -80,6 +80,8 @@ async def __remove(ctx: commands.Context):
     state = states[channel_id]
     if isinstance(state, Running):
         if state.author_id == author_id or ctx.author.server_permissions.administrator:
+            message = await ctx.fetch_message(state.post_id)
+            await message.delete()
             del states[channel_id]
             await ctx.send("Current game was removed!", delete_after=2)
         else:
@@ -159,7 +161,7 @@ async def __guess(ctx: commands.Context, *, guess: str):
         else:
             expires_in = cooldown.expires_in()
             await ctx.send(f"{ctx.author.mention} still has a cooldown of {expires_in}s!",
-                                     delete_after=expires_in)
+                           delete_after=expires_in)
             return
 
     guess = guess.strip()
