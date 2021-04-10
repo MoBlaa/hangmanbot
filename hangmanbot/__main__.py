@@ -96,6 +96,9 @@ async def __post_state(ctx: commands.Context):
     author_id = ctx.author.id
     cooldown_id = (CooldownType.STATE, author_id, channel_id)
 
+    # Delete !state message
+    await ctx.message.delete()
+
     if channel_id not in states:
         await ctx.send("No Game running!", delete_after=5)
         return
@@ -120,8 +123,6 @@ async def __post_state(ctx: commands.Context):
     await old_message.delete()
 
     cooldowns.add_for(cooldown_id)
-    # Delete !state message
-    await ctx.message.delete()
 
 
 @bot.command(name="start_hangman", aliases=["s"])
