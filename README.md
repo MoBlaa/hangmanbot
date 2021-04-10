@@ -29,6 +29,7 @@ or set the environment variable `TOKEN=<your bot login token>` on the machine th
 - `!remove` or `!rm`: Admin of the server or author of the game can delete the current game.
 - `!cooldown <command>` or `!cd <command>` (Admin): Get the cooldown for the given command. `<command>` can either be a alias or the full command name.
 - `!cooldown-edit <command> <seconds>` or `!cd-e <command> <seconds>` (Admin): Set the cooldown for the given command to given seconds. `<command>` can either be a alias or the full command name.
+- `!state`: Delete the old Gamestate post (which will be updated) and post a new one. This allows to move the state post to a more recent position.
 
 ## Features
 
