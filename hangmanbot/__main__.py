@@ -89,6 +89,35 @@ async def __remove(ctx: commands.Context):
                            "(not author of game or admin of server)", delete_after=5)
 
 
+@bot.command(name="state")
+@commands.bot_has_permissions(manage_messages=True)
+async def __post_state(ctx: commands.Context):
+    channel_id = ctx.channel.id
+    author_id = ctx.author.id
+    cooldown_id = (CooldownType.STATE, author_id, channel_id)
+
+    if channel_id not in states:
+        await ctx.send("No Game running!", delete_after=5)
+        return
+
+    if cooldown_id in cooldowns:
+        cooldown = cooldowns[cooldown_id]
+        if cooldown.expired():
+            del cooldowns[cooldown_id]
+        else:
+            expires_in = cooldown.expires_in()
+            await ctx.send(f"{ctx.author.mention} still has a cooldown of {expires_in}",
+                           delete_after=expires_in)
+            return
+
+    state = states[channel_id]
+    old_message = await ctx.fetch_message(state.post_id)
+    new_message = await ctx.send(f"{state}")
+    state.post_id = new_message.id
+    await old_message.delete()
+    cooldowns.add_for(cooldown_id)
+
+
 @bot.command(name="start_hangman", aliases=["s"])
 @commands.bot_has_permissions(manage_messages=True)
 async def __start_hangman(ctx: commands.Context, *, phrase: str):

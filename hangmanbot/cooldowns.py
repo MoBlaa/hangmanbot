@@ -17,6 +17,7 @@ class CooldownType(IntEnum):
     REMOVE = 1
     GUESS = 2
     START = 3
+    STATE = 4
 
 
 class Cooldown:
@@ -51,6 +52,7 @@ class Cooldown:
 DEFAULT_RM_COOLDOWN: int = 60
 DEFAULT_START_COOLDOWN: int = 20
 DEFAULT_GUESS_COOLDOWN: int = 5
+DEFAULT_STATE_COOLDOWN: int = 60
 
 
 class Cooldowns:
@@ -59,6 +61,7 @@ class Cooldowns:
     __remove_cooldowns: {(int, int): Cooldown} = dict()
     __guess_cooldowns: {(int, int): Cooldown} = dict()
     __start_cooldowns: {(int, int): Cooldown} = dict()
+    __state_cooldowns: {(int, int): Cooldown} = dict()
     cooldown_values: {(CooldownType, int): int} = dict()
 
     @classmethod
@@ -69,7 +72,7 @@ class Cooldowns:
         for cooldown in data:
             cd_type, channel, value = cooldown['type'], cooldown['channel'], cooldown['value']
             cooldowns[(CooldownType(cd_type), channel)] = value
-        return cls(guess_cooldown_values=cooldowns)
+        return cls(cooldown_values=cooldowns)
 
     @classmethod
     def load(cls):
@@ -81,8 +84,8 @@ class Cooldowns:
             logging.debug("No Cooldowns file found to load (%s)", err)
             return cls()
 
-    def __init__(self, guess_cooldown_values: {(CooldownType, int): int} = None):
-        self.cooldown_values = guess_cooldown_values if guess_cooldown_values else {}
+    def __init__(self, cooldown_values: {(CooldownType, int): int} = None):
+        self.cooldown_values = cooldown_values if cooldown_values else {}
 
     def __getitem__(self, item: (CooldownType, int, int)) -> Cooldown:
         cd_type, author, channel = item
@@ -90,7 +93,9 @@ class Cooldowns:
             return self.__start_cooldowns.get((author, channel))
         if cd_type == CooldownType.REMOVE:
             return self.__remove_cooldowns.get((author, channel))
-        return self.__guess_cooldowns.get((author, channel))
+        if cd_type == CooldownType.GUESS:
+            return self.__guess_cooldowns.get((author, channel))
+        return self.__state_cooldowns.get((author, channel))
 
     def __contains__(self, item: (CooldownType, int, int)) -> bool:
         cd_type, author, channel = item
@@ -98,7 +103,9 @@ class Cooldowns:
             return self.__start_cooldowns.__contains__((author, channel))
         if cd_type == CooldownType.REMOVE:
             return self.__remove_cooldowns.__contains__((author, channel))
-        return self.__guess_cooldowns.__contains__((author, channel))
+        if cd_type == CooldownType.GUESS:
+            return self.__guess_cooldowns.__contains__((author, channel))
+        return self.__state_cooldowns.__contains__((author, channel))
 
     def __delitem__(self, key: (CooldownType, int, int)):
         cd_type, author, channel = key
@@ -108,6 +115,8 @@ class Cooldowns:
             cds = self.__remove_cooldowns
         elif cd_type == CooldownType.GUESS:
             cds = self.__guess_cooldowns
+        elif cd_type == CooldownType.STATE:
+            cds = self.__state_cooldowns
         else:
             raise RuntimeError(f"Unsupported CooldownType: {cd_type}")
         cds.pop((author, channel), None)
@@ -131,7 +140,9 @@ class Cooldowns:
             return DEFAULT_START_COOLDOWN
         if cd_type == CooldownType.REMOVE:
             return DEFAULT_RM_COOLDOWN
-        return DEFAULT_GUESS_COOLDOWN
+        if cd_type == CooldownType.GUESS:
+            return DEFAULT_GUESS_COOLDOWN
+        return DEFAULT_STATE_COOLDOWN
 
     def set_cooldown(self, key: (CooldownType, int), value: int):
         """Sets a cooldown value for a type and channel"""
