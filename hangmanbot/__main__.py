@@ -7,7 +7,7 @@ from settings import DISCORD_TOKEN
 from states import States, Running, Solved, Failed
 from cooldowns import Cooldowns, CooldownType
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 states = States.load()
@@ -115,19 +115,25 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
 
     await ctx.message.delete()
 
-    states[channel_id] = Running(phrase, author_id=ctx.author.id)
+    state = Running(phrase, author_id=ctx.author.id)
     cooldowns.add_for(cooldown_id)
 
-    await ctx.send(f"{states[channel_id]}")
+    message = await ctx.send(f"{state}")
+    state.post_id = message.id
+    states[channel_id] = state
 
 
 @bot.command(name="guess", aliases=["g"])
+@commands.has_permissions(manage_messages=True)
 async def __guess(ctx: commands.Context, *, guess: str):
     channel_id = ctx.channel.id
     author_id = ctx.author.id
     guess_cooldown_id = (CooldownType.GUESS, author_id, channel_id)
     remove_cooldown_id = (CooldownType.REMOVE, author_id, channel_id)
     start_cooldown_id = (CooldownType.START, author_id, channel_id)
+
+    # Delete message at last to remove spam
+    await ctx.message.delete(delay=2)
 
     if channel_id not in states:
         await ctx.send(
@@ -146,15 +152,17 @@ async def __guess(ctx: commands.Context, *, guess: str):
         if cooldown.expired():
             del cooldowns[guess_cooldown_id]
         else:
-            await ctx.send(f"{ctx.author.mention} still has a "
-                           f"cooldown of {cooldown.expires_in()}s!")
+            expires_in = cooldown.expires_in()
+            message = await ctx.send(f"{ctx.author.mention} still has a cooldown of {expires_in}s!")
+            await message.delete(delay=expires_in)
             return
 
     guess = guess.strip()
     new_state = old_state.guess(guess, ctx.author)
-    states[channel_id] = new_state
 
-    await ctx.send(f"{new_state}")
+    message = await ctx.fetch_message(new_state.post_id)
+    await message.edit(content=f"{new_state}")
+    states[channel_id] = new_state
 
     if isinstance(new_state, (Solved, Failed)):
         # Also add Cooldown for users which started the game so others can start a game

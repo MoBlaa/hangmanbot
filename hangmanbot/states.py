@@ -93,9 +93,8 @@ class Running(State):
 
     def guess(self, guess: str, guesser: discord.Member):
         """Guessing a single character or the whole phrase"""
-        # TODO: Remove
-        # if guesser.id == self.author_id:
-        #    return self
+        if guesser.id == self.author_id:
+            return self
 
         guess = guess.lower()
         if len(guess) == 1:
