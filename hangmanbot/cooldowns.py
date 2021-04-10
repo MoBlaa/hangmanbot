@@ -168,7 +168,7 @@ class Cooldowns:
         elif cd_type == CooldownType.GUESS:
             self.__guess_cooldowns[(author, channel)] = cooldown
         elif cd_type == CooldownType.STATE:
-            self.__guess_cooldowns[(author, channel)] = cooldown
+            self.__state_cooldowns[(author, channel)] = cooldown
         else:
             raise RuntimeError(f"Unsupported CooldownType: {cd_type}")
         self.__save()
