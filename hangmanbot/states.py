@@ -147,6 +147,7 @@ class Running(State):
         return f"Running(phrase={self.phrase}," \
                f"unveiled={self.unveiled}," \
                f"wrong_guesses={self.wrong_guesses}," \
+               f"post_id={self.post_id}," \
                f"guessed={self.guessed})"
 
 

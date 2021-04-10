@@ -115,6 +115,8 @@ async def __post_state(ctx: commands.Context):
     old_message = await ctx.fetch_message(state.post_id)
     new_message = await ctx.send(f"{state}")
     state.post_id = new_message.id
+    # Re-Add so it's stored properly
+    states[channel_id] = state
     await old_message.delete()
 
     cooldowns.add_for(cooldown_id)
