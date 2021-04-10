@@ -34,6 +34,7 @@ class Running(State):
     """Hangman game is currently running and is not yet solved or failed."""
 
     author_id: int
+    author_name: str
     phrase: str
     unveiled: [bool]
     wrong_guesses: int
@@ -44,18 +45,20 @@ class Running(State):
         """Parses this class from json deserialized data"""
         return Running(phrase=data['phrase'],
                        author_id=data['author_id'],
+                       author_name=data['author_name'],
                        post_id=data['post_id'],
                        unveiled=data['unveiled'],
                        wrong_guesses=data['wrong_guesses'],
                        guessed=set(data['guessed']))
 
-    def __init__(self, phrase: str, author_id: int, post_id: int = None, unveiled: [bool] = None,
+    def __init__(self, phrase: str, author_id: int, author_name: str, post_id: int = None, unveiled: [bool] = None,
                  wrong_guesses: int = None, guessed: {str} = None):
         super().__init__(post_id)
         if not phrase:
             raise ValueError("Word has to be a non empty string")
         self.phrase = phrase
         self.author_id = author_id
+        self.author_name = author_name
         if not unveiled:
             self.unveiled = [False for _ in range(len(phrase))]
         else:
@@ -128,7 +131,7 @@ class Running(State):
                f"```" \
                f"{self.__unveiled()}" \
                f"```" \
-               f"Guess with `!g` or `!guess`"
+               f"@{self.author_name}    Guess with `!g` or `!guess`"
 
     def __repr__(self):
         return f"Running(phrase={self.phrase}," \

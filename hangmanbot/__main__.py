@@ -115,7 +115,7 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
 
     await ctx.message.delete()
 
-    state = Running(phrase, author_id=ctx.author.id)
+    state = Running(phrase, author_id=ctx.author.id, author_name=ctx.author.display_name)
     cooldowns.add_for(cooldown_id)
 
     message = await ctx.send(f"{state}")
