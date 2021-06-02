@@ -132,6 +132,11 @@ class Running(State):
                           post_id=self.post_id)
         return self
 
+    def unveil(self):
+        """Unveils all missing characters"""
+        for i in range(0, len(self.unveiled)):
+            self.unveiled[i] = True
+
     def __str__(self) -> str:
         return f"```" \
                f"{HANGMANS[self.wrong_guesses]}\r\n" \
@@ -201,10 +206,7 @@ class Failed(State):
         self.post_id = post_id
 
     def __str__(self) -> str:
-        return f"```" \
-               f"{HANGMANS[MAX_GUESSES]}" \
-               f"```" \
-               f"__Failed!__ The phrase was ||{self.phrase}||"
+        return f"__Failed!__ The phrase was ||{self.phrase}||"
 
 
 class States:
