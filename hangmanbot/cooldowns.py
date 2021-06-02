@@ -133,7 +133,7 @@ class Cooldowns:
 
     def __get_cooldown_seconds_for(self, key: (CooldownType, int)) -> int:
         seconds = self.cooldown_values.get(key)
-        if seconds:
+        if seconds or seconds == 0:
             return seconds
         cd_type, _ = key
         if cd_type == CooldownType.START:
