@@ -23,7 +23,7 @@ async def on_ready():
     logging.info("Logged in as %s", bot.user)
 
 
-@bot.command(name="cooldown-get", aliases=["cd", "cooldown"])
+@bot.command(name="cooldown-get", aliases=["cd", "cooldown"], help="Get the cooldown value for a command")
 @commands.has_permissions(administrator=True)
 async def __get_cooldown(ctx: commands.Context, cd_type: str = None):
     channel_id = ctx.channel.id
@@ -43,7 +43,7 @@ async def __get_cooldown(ctx: commands.Context, cd_type: str = None):
     await ctx.send(f"Cooldown for '{cd_type}' in this channel: {value}")
 
 
-@bot.command(name="cooldown-edit", aliases=["cd-edit", "cd-e"])
+@bot.command(name="cooldown-edit", aliases=["cd-edit", "cd-e"], help="Edit/Set the cooldown value for a command")
 @commands.has_permissions(administrator=True)
 async def __cooldown_edit(ctx: commands.Context, cd_type: str, value: int):
     channel_id = ctx.channel.id
@@ -63,7 +63,7 @@ async def __cooldown_edit(ctx: commands.Context, cd_type: str, value: int):
     await ctx.send(f"Successfully set cooldown of '{cd_type}' to {value}s")
 
 
-@bot.command(name="remove", aliases=["rm"])
+@bot.command(name="remove", aliases=["rm"], help="Remove the current game")
 async def __remove(ctx: commands.Context):
     channel_id = ctx.channel.id
     author_id = ctx.author.id
@@ -89,7 +89,7 @@ async def __remove(ctx: commands.Context):
                            "(not author of game or admin of server)", delete_after=5)
 
 
-@bot.command(name="state")
+@bot.command(name="state", help="Repost the game state message")
 @commands.bot_has_permissions(manage_messages=True)
 async def __post_state(ctx: commands.Context):
     channel_id = ctx.channel.id
@@ -125,7 +125,7 @@ async def __post_state(ctx: commands.Context):
     cooldowns.add_for(cooldown_id)
 
 
-@bot.command(name="start_hangman", aliases=["s"])
+@bot.command(name="start_hangman", aliases=["s"], help="Start a new game")
 @commands.bot_has_permissions(manage_messages=True)
 async def __start_hangman(ctx: commands.Context, *, phrase: str):
     channel_id = ctx.channel.id
@@ -165,7 +165,7 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
     states[channel_id] = state
 
 
-@bot.command(name="guess", aliases=["g"])
+@bot.command(name="guess", aliases=["g"], help="Guess a character or the whole phrase")
 @commands.bot_has_permissions(manage_messages=True)
 async def __guess(ctx: commands.Context, *, guess: str):
     channel_id = ctx.channel.id
