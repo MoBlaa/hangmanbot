@@ -30,6 +30,12 @@ or set the environment variable `TOKEN=<your bot login token>` on the machine th
 - `!cooldown <command>` or `!cd <command>` (Admin): Get the cooldown for the given command. `<command>` can either be a alias or the full command name.
 - `!cooldown-edit <command> <seconds>` or `!cd-e <command> <seconds>` (Admin): Set the cooldown for the given command to given seconds. `<command>` can either be a alias or the full command name.
 - `!state`: Delete the old Gamestate post (which will be updated) and post a new one. This allows to move the state post to a more recent position.
+- `!help`: Shows a generic help message or information about commands if invoked with `!help guess` for example.
+
+### Administatrion Commands
+
+- `!cooldown-edit <command> <cooldown seconds>`: Edit/Set a cooldown value for a command.
+- `!cooldown-get <command>` get the cooldown value for a command.
 
 ## Features
 
