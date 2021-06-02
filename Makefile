@@ -10,7 +10,7 @@ package-win:
 	python3 -m pip install pyinstaller
 	python3 -O -m PyInstaller --onefile hangmanbot/__main__.py
 
-package:
+package: clean
 	mkdir -p dist/exec
 	cp -r hangmanbot/* dist/exec/
 	python3 -m pip install -r requirements.txt --target dist/exec/
