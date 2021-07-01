@@ -26,6 +26,15 @@ class Player:
     def from_json(cls, data: dict):
         return cls(id=data['id'], name=data['name'], mention=data['mention'])
 
+    def __eq__(self, other):
+        return isinstance(other, Player) and other.id == self.id
+
+    def __ne__(self, other):
+        return not isinstance(other, Player) or other.id != self.id
+
+    def __hash__(self):
+        return self.id.__hash__()
+
     def __str__(self):
         return f"{self.name} [{self.id}]"
 
