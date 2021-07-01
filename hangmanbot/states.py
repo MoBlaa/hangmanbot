@@ -8,6 +8,8 @@ import sys
 from typing import Any
 
 import discord
+
+from player import Player, PlayerEncoder
 from settings import STATES_FILE, CONFIG_DIR
 from ascii import MAX_GUESSES, HANGMANS
 
@@ -33,35 +35,32 @@ class State:
 class Running(State):
     """Hangman game is currently running and is not yet solved or failed."""
 
-    author_id: int
-    author_name: str
+    author: Player
     phrase: str
     unveiled: [bool]
     wrong_guesses: int
     guessed: {str}
-    participants: {str}
+    participants: {Player}
 
     @classmethod
     def from_json(cls, data: dict) -> Running:
         """Parses this class from json deserialized data"""
         return Running(phrase=data['phrase'],
-                       author_id=data['author_id'],
-                       author_name=data['author_name'],
+                       author=Player.from_json(data['author']),
                        post_id=data['post_id'],
                        unveiled=data['unveiled'],
                        wrong_guesses=data['wrong_guesses'],
                        guessed=set(data['guessed']),
-                       participants=set(data['participants']))
+                       participants=set(map(Player.from_json, data['participants'])))
 
-    def __init__(self, phrase: str, author_id: int, author_name: str, post_id: int = None,
+    def __init__(self, phrase: str, author: Player, post_id: int = None,
                  unveiled: [bool] = None, wrong_guesses: int = None, guessed: {str} = None,
-                 participants: {str} = None):
+                 participants: {Player} = None):
         super().__init__(post_id)
         if not phrase:
             raise ValueError("Word has to be a non empty string")
         self.phrase = phrase
-        self.author_id = author_id
-        self.author_name = author_name
+        self.author = author
         self.participants = participants if participants else set()
         if not unveiled:
             self.unveiled = [False for _ in range(len(phrase))]
@@ -100,9 +99,9 @@ class Running(State):
 
     def guess(self, guess: str, guesser: discord.Member):
         """Guessing a single character or the whole phrase"""
-        if guesser.id == self.author_id:
+        if guesser.id == self.author.id:
             return self
-        self.participants.add(guesser.mention)
+        self.participants.add(Player(guesser.id, guesser.display_name, guesser.mention))
 
         guess = guess.lower()
         if len(guess) == 1:
@@ -144,7 +143,7 @@ class Running(State):
                f"```" \
                f"{self.__unveiled()}" \
                f"```" \
-               f"\xa9{self.author_name}\r\n" \
+               f"\xa9{self.author.name}\r\n" \
                f"Guess with `!g` or `!guess`"
 
     def __repr__(self):
@@ -160,27 +159,27 @@ class Solved(State):
 
     Attributes:
         phrase (str): Phrase of the solved game.
-        solver_mentions (str): Mention String of the Member who solved the game.
+        solver_mentions (Player): Mention String of the Member who solved the game.
 
     """
     phrase: str
-    solver_mentions: {str}
+    solvers: {Player}
 
     @classmethod
     def from_json(cls, data: dict) -> Solved:
         """Parses this class from json deserialized data"""
         return Solved(phrase=data['phrase'],
-                      solver_mentions=data['solvers'],
+                      solver_mentions=set(map(Player.from_json, data['solvers'])),
                       post_id=data['post_id'])
 
-    def __init__(self, phrase: str, solver_mentions: {str}, post_id: int):
+    def __init__(self, phrase: str, solver_mentions: {Player}, post_id: int):
         super().__init__(post_id)
         self.phrase = phrase
-        self.solver_mentions = solver_mentions
+        self.solvers = solver_mentions
         self.post_id = post_id
 
     def __str__(self) -> str:
-        solvers = ", ".join(self.solver_mentions)
+        solvers = ", ".join(map(lambda player: player.mention, self.solvers))
         return f"__Solved!__ {solvers} won and guessed the phrase `{self.phrase}`"
 
 
@@ -273,18 +272,18 @@ class States:
 
 class StatesEncoder(json.JSONEncoder):
     """Implements encoding for State implementations and States class"""
+
     def default(self, o: Any) -> Any:
         if isinstance(o, Running):
             return {
                 'Running': {
                     'phrase': o.phrase,
                     'unveiled': o.unveiled,
-                    'author_id': o.author_id,
-                    'author_name': o.author_name,
+                    'author': PlayerEncoder().default(o.author),
                     'post_id': o.post_id,
                     'wrong_guesses': o.wrong_guesses,
                     'guessed': list(o.guessed),
-                    'participants': list(o.participants)
+                    'participants': list(map(lambda player: PlayerEncoder().default(player), o.participants))
                 }
             }
         if isinstance(o, Solved):
@@ -292,7 +291,7 @@ class StatesEncoder(json.JSONEncoder):
                 'Solved': {
                     'post_id': o.post_id,
                     'phrase': o.phrase,
-                    'solvers': list(o.solver_mentions),
+                    'solvers': list(map(lambda player: PlayerEncoder().default(player), o.solvers)),
                 }
             }
         if isinstance(o, Failed):
