@@ -3,6 +3,8 @@
 import logging
 import discord
 from discord.ext import commands
+
+from hangmanbot.player import Player
 from settings import DISCORD_TOKEN
 from states import States, Running, Solved, Failed
 from cooldowns import Cooldowns, CooldownType
@@ -79,7 +81,7 @@ async def __remove(ctx: commands.Context):
             return
     state = states[channel_id]
     if isinstance(state, Running):
-        if state.author_id == author_id or ctx.author.server_permissions.administrator:
+        if state.author.id == author_id or ctx.author.server_permissions.administrator:
             message = await ctx.fetch_message(state.post_id)
             await message.delete()
             del states[channel_id]
@@ -157,7 +159,7 @@ async def __start_hangman(ctx: commands.Context, *, phrase: str):
 
     await ctx.message.delete()
 
-    state = Running(phrase, author_id=ctx.author.id, author_name=ctx.author.display_name)
+    state = Running(phrase, author=Player.from_user(ctx.author))
     cooldowns.add_for(cooldown_id)
 
     message = await ctx.send(f"{state}")
@@ -186,7 +188,7 @@ async def __guess(ctx: commands.Context, *, guess: str):
         return
 
     old_state = states[channel_id]
-    if isinstance(old_state, Running) and old_state.author_id == author_id:
+    if isinstance(old_state, Running) and old_state.author.id == author_id:
         await ctx.send("Authors are only allowed to reset the current game!", delete_after=5)
         return
 
