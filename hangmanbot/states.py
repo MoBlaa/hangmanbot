@@ -108,15 +108,14 @@ class Running(State):
         if len(guess) == 1:
             if guess in self.guessed:
                 self.wrong_guesses += 1
-                return self
+            else:
+                contained = self.__solve(
+                    lambda char: char.lower() == guess)
 
-            contained = self.__solve(
-                lambda char: char.lower() == guess)
+                if not contained:
+                    self.wrong_guesses += 1
 
-            if not contained:
-                self.wrong_guesses += 1
-
-            self.guessed.add(guess)
+                self.guessed.add(guess)
         elif self.phrase.lower() == guess:
             return Solved(phrase=self.phrase,
                           solver_mentions=self.participants,

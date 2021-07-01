@@ -205,12 +205,12 @@ async def __guess(ctx: commands.Context, *, guess: str):
     states[channel_id] = new_state
 
     if isinstance(new_state, (Solved, Failed)):
-        # Unveil all remaining characters in old state
+        # Unveil all remaining characters in old state if solved
         assert isinstance(old_state, Running)
         if isinstance(new_state, Solved):
             old_state.unveil()
-        message = await ctx.fetch_message(old_state.post_id)
-        await message.edit(content=f"{old_state}")
+            message = await ctx.fetch_message(old_state.post_id)
+            await message.edit(content=f"{old_state}")
 
         # Create new post so everyone is mentioned properly and gamestate is still
         # visible after the game was finished
