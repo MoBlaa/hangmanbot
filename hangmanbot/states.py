@@ -9,7 +9,7 @@ from typing import Any
 
 import discord
 
-from hangmanbot.player import Player, PlayerEncoder
+from player import Player, PlayerEncoder
 from settings import STATES_FILE, CONFIG_DIR
 from ascii import MAX_GUESSES, HANGMANS
 

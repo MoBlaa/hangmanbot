@@ -4,7 +4,7 @@ import logging
 import discord
 from discord.ext import commands
 
-from hangmanbot.player import Player
+from player import Player
 from settings import DISCORD_TOKEN
 from states import States, Running, Solved, Failed
 from cooldowns import Cooldowns, CooldownType
