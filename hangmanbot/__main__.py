@@ -209,8 +209,9 @@ async def __guess(ctx: commands.Context, *, guess: str):
         assert isinstance(old_state, Running)
         if isinstance(new_state, Solved):
             old_state.unveil()
-            message = await ctx.fetch_message(old_state.post_id)
-            await message.edit(content=f"{old_state}")
+        # Update Message to show hanged man
+        message = await ctx.fetch_message(old_state.post_id)
+        await message.edit(content=f"{old_state}")
 
         # Create new post so everyone is mentioned properly and gamestate is still
         # visible after the game was finished
