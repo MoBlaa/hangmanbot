@@ -207,7 +207,8 @@ async def __guess(ctx: commands.Context, *, guess: str):
     if isinstance(new_state, (Solved, Failed)):
         # Unveil all remaining characters in old state
         assert isinstance(old_state, Running)
-        old_state.unveil()
+        if isinstance(new_state, Solved):
+            old_state.unveil()
         message = await ctx.fetch_message(old_state.post_id)
         await message.edit(content=f"{old_state}")
 
